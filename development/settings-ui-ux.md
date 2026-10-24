@@ -138,30 +138,32 @@ and WebUI share this contract.
 Owner screenshot corrections on 2026-10-21 place `What Is Conch?` and `What Is Filo?` in a top Help
 group on Add Device, before Connection. Device lists and Edit pages do not duplicate the entries.
 Help uses the shared scaffold, guarded transition and scroll owner. Opening help retains the current
-editor-owned draft; Back and the final return action restore that same draft without saving. Closed
+editor-owned draft; the top-bar Back restores that same draft without saving. The guide has no
+separate in-page Back or return button (owner correction, 2026-10-22). Closed
 or outgoing editor callbacks cannot regain authority on return. DocumentationFab remains unchanged.
 Conch and Filo help pages have exactly three named `SettingsGroup` categories in this order:
 Introduction, Installation, and Project Address (owner correction, 2026-10-21 21:45). Introduction
 uses one standard icon/title/supporting-description item. Installation has exactly three numbered
-steps in one group: open the target terminal, copy and run the maintained command, then return to
-fill connection details. Conch target-system choices appear at the start of Installation,
+steps in one group: open the target terminal, copy and run the maintained command, then one short
+sentence on adding the device with the installer's address and credential. Conch target-system choices appear at the start of Installation,
 before the numbered steps, not in a fourth category. Owner screenshot correction on 2026-10-22
 uses the existing `PillTabSwitcher` instead of radio rows. Its icon/title/chips card uses
 `SettingsIconContent` with the same 16 dp top/bottom inset as ordinary cards and a 12 dp title-to-chips
 gap. The control does not repeat a supporting description. Windows/Linux/Termux labels wrap without
 truncation on narrow screens, at large fonts and in RTL; selection and disabled semantics remain
 accessible. Step numbers reserve the same 24 dp leading width as standard icons. Step two renders
-the exact command with the shared `ChatMarkdownCodeBlock`, wrapped and selectable. The host retains
-its existing guarded Copy Command action and omits the block's built-in copy header, so an outgoing
-or closed page cannot copy through an unfenced second action. Project Address contains one whole-row external link
+the exact command with the shared `ChatMarkdownCodeBlock`, wrapped and selectable. Copy uses the
+block's own header copy target above the code, like chat Markdown (owner correction, 2026-10-22),
+labelled with the shell language. There is no separate Copy Command button. The header copy is
+disabled and fenced by page ownership, so an outgoing or closed page cannot copy. Project Address contains one whole-row external link
 with a Code icon, GitHub title,
 visible repository address, and the established external-link icon and launcher. Do not leave the
 introduction or project link as ungrouped text/buttons or add separate Advanced, Copy Command or
 Connect groups or repeated explanatory paragraphs. Commands are displayed/copied only.
 Conch uses default user-mode commands: ordinary Windows PowerShell, Linux without sudo and Termux
 without root. Advanced mode/linger instructions stay in the linked source; existing modes are never
-silently changed. Filo targets Windows x64 administrator PowerShell. Its final step identifies the
-native Windows account and a reachable service URL/token; localhost works only on the computer.
+silently changed. Filo targets Windows x64 administrator PowerShell. Its final step names the
+Windows account/source choice and the installer's service URL/token.
 Do not promise generic LAN, macOS/Linux, Chat/Cowork or unsupported native control. Credentials stay
 in the existing editor. Source links retain the established external-link icon and launcher.
 
@@ -211,23 +213,31 @@ in the existing editor. Source links retain the established external-link icon a
 ## Conversation Search model editors
 
 - The Add Model type picker uses Cloud for Remote and the Provider Local AutoAwesome stars for Local.
+- Model identifier fields, including Local Chat, Remote Embedding Add/Edit and manual custom models,
+  use the localized `Model ID` label and Badge icon. API Key fields retain their key icon.
 - Remote Add uses a Cloud-icon Provider SettingsItem with the current provider as its trailing value.
   The whole row opens the same selected-item dropdown style as Model Search Method; provider chips
-  are not shown. Model uses AutoAwesome and one text input with a model-ID hint, without preset chips.
-- Local Add shows Model File as a whole-row AutoAwesome import action using the shared two-line
-  model-import item. Its headline and leading icon use primary, including a selected filename. The
-  description identifies a GGUF embedding model for local semantic search, not generic inference.
-  Both empty and selected-file states open the picker; there is no separate Replace action.
+  are not shown. The Model group contains one Badge Model ID field with a model-ID hint, without preset chips.
+- Local Add shows the shared ModelImportItem with an AutoAwesome icon and a fixed Embedding Model
+  (.gguf) title. Its description identifies a GGUF embedding model for local semantic search.
 - Failed remote embedding connection tests use the existing app snackbar with localized failure
   text, not an inline error item that changes the form layout. Failure keeps the editor and draft
   unchanged, and never saves the model. A closed/discarded editor must not emit a late result.
-- Embedding, Local Chat and vision-projector import actions share one fixed 24dp leading slot.
-  Empty-selection titles end with `(.gguf)` for Embedding/Chat and `(.mmproj)` for the vision
-  projector in every supported locale. Selected filenames are not given another suffix.
-  The ordinary icon and importing progress ring crossfade there over 250ms; importing never adds
-  a right-side spinner or shifts text. Imported-name changes also crossfade over 250ms. Importing
-  disables the whole row without changing its primary action styling. The existing motion-aware
-  progress indicator and shared Reduced Motion policy remain authoritative.
+- Embedding, Local Chat, vision-projector and SSH private-key imports share ModelImportItem.
+  Titles stay fixed across states; Chat/Embedding titles retain `(.gguf)`. Empty rows use the item's
+  inactive icon (VisibilityOff for projector), onSurfaceVariant gray, `Not imported · <purpose>`
+  supporting text and a trailing FileUpload action. Importing disables the row, shows `Importing…`
+  and only the leading progress indicator. Imported rows use the original icon in primary
+  (Visibility for projector), `<filename> · <size>` supporting text, and an optional enablement line
+  (`Image input enabled` for projector). Titles use the ordinary onSurface headline color.
+- Whole-row clicks import or replace. Only removable optional items have a trailing Delete action;
+  required main model files have none. A fixed 24dp leading slot and 48dp trailing slot prevent
+  action/icon changes from moving text. Leading state and supporting text crossfade for 250ms.
+  The motion-aware progress indicator and shared Reduced Motion policy remain authoritative.
+- File-backed rows read basename and length from the saved path on IO, including on editor re-entry.
+  A missing file uses an error-colored warning icon and `File missing`, without an enablement claim.
+  SSH keys have no retained source file: their saved filename and stored UTF-8 byte length supply
+  metadata to the same component without writing key files or exposing key content.
 - Local Edit omits Model File, including the private generated filename. The model's stored identity
   remains immutable. Both editors retain explicit Save and their unsaved-draft Back guard.
 - Edit Cache uses a stable title and the existing cache status as supporting text, with the existing
@@ -239,10 +249,10 @@ in the existing editor. Source links retain the established external-link icon a
   each model's Edit action navigate through the existing Settings transition owner to a full-page
   Add/Edit Local Model editor, not an AlertDialog.
 - Reuse the collapsing Settings scaffold, groups and icon/field rows. New models import a GGUF
-  through the same primary AutoAwesome import row as Embedding, but copy explicitly identifies a
-  Chat model running conversations on-device. The optional vision-projector row uses the same primary
-  action and left progress crossfade, with a Visibility icon and copy requiring a matching mmproj
-  GGUF for image input. Existing model files stay unchanged and are omitted from Edit. Keep Model ID,
+  through the same shared import row as Embedding with a fixed Chat Model (.gguf) title; copy
+  identifies a Chat model running conversations on-device. The optional Vision Projector row has
+  a fixed title, VisibilityOff/Visibility state icons and copy requiring a matching mmproj GGUF for
+  image input. Existing main model files stay unchanged and are omitted from Edit. Keep Model ID,
   alias, optional vision projector and the existing numeric settings.
 - Save is explicit. Back discards only after the shared unsaved-changes guard; field edits,
   navigation and picker dismissal never persist a model. Unsaved imported files are draft-owned;
@@ -372,6 +382,10 @@ in the existing editor. Source links retain the established external-link icon a
   never substitutes for an explicitly chosen model. Neither section has a Save action.
 - Disabling does not erase stored lists, hide existing navigation, stop children or discard completion
   delivery. Existing admitted work keeps its frozen context, like other tool-access preferences.
+- While delegation is enabled, the Subagents group shows a second whole-row switch, Allow Deleting
+  Subagents (Delete icon), default off, immediate save. It controls only the parent's `delete_agent`
+  tool (message-generation.md 8.14); manual deletion through the child's conversation menu is
+  unaffected. Chinese copy is 允许删除子代理.
 - Capsule Display and Limits follow the Models group, in that order, outside the delegation-enabled
   condition so both remain configurable while delegation is disabled. Capsule Display follows the
   Appearance selector row: its trailing value uses primary `labelLarge`, a 96dp end-aligned text

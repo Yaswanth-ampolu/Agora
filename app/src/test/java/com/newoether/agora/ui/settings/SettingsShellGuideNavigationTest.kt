@@ -95,7 +95,7 @@ class SettingsShellGuideNavigationTest {
     private fun name() = compose.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("shell-field-name")))
     private fun save() = compose.onNodeWithContentDescription(strings.getValue(R.string.save))
     private fun returnFromGuide() {
-        compose.onNodeWithTag("conch-guide-return").performScrollTo().performClick()
+        back().performClick()
         compose.waitForIdle()
         name().assertExists()
         compose.onNodeWithTag("conch-install-guide").assertDoesNotExist()
@@ -164,14 +164,14 @@ class SettingsShellGuideNavigationTest {
         val editorScroll = compose.onNode(hasScrollAction()).fetchSemanticsNode()
             .config[SemanticsProperties.VerticalScrollAxisRange].value()
         openGuide()
-        compose.onNodeWithTag("conch-guide-return").performScrollTo()
+        compose.onNodeWithTag("conch-guide-source").performScrollTo()
         back().performClick()
         compose.waitForIdle()
         val returnedScroll = compose.onNode(hasScrollAction()).fetchSemanticsNode()
             .config[SemanticsProperties.VerticalScrollAxisRange].value()
         assertEquals(editorScroll, returnedScroll)
         openGuide()
-        compose.onNodeWithTag("conch-guide-return").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("conch-guide-source").performScrollTo().assertIsDisplayed()
         assertNoPersistence()
         compose.runOnIdle { assertEquals(0, backs) }
     }

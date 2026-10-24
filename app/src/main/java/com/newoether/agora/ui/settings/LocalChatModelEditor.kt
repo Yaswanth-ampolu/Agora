@@ -8,13 +8,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VpnKey
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,8 +53,6 @@ internal fun LocalChatModelEditor(
     var draft by remember(initial?.id) { mutableStateOf(start) }
     val imports = remember(initial?.id) { LocalChatModelImports() }
     var closed by remember { mutableStateOf(false) }
-    var modelName by remember { mutableStateOf("") }
-    var projectorName by remember { mutableStateOf("") }
     var pickingProjector by remember { mutableStateOf<Boolean?>(null) }
     var importingProjector by remember { mutableStateOf<Boolean?>(null) }
     var showGgufError by remember { mutableStateOf(false) }
@@ -92,12 +90,10 @@ internal fun LocalChatModelEditor(
                     } else if (projector) {
                         imports.discard(draft.projectorPath)
                         draft = draft.copy(projectorPath = file.path)
-                        projectorName = file.displayName
                         error = null
                     } else {
                         imports.discard(draft.modelPath)
                         draft = draft.copy(modelPath = file.path)
-                        modelName = file.displayName
                         error = null
                     }
                 }
@@ -179,7 +175,8 @@ internal fun LocalChatModelEditor(
                     if (initial == null) {
                         add {
                             ModelImportItem(
-                                title = modelName.ifBlank { stringResource(R.string.local_chat_import_title) },
+                                title = stringResource(R.string.local_chat_import_title),
+                                filePath = draft.modelPath,
                                 description = stringResource(R.string.local_chat_import_desc),
                                 icon = Icons.Default.AutoAwesome,
                                 importing = importingProjector == false,
@@ -189,7 +186,7 @@ internal fun LocalChatModelEditor(
                         }
                     }
                     add {
-                        SettingsIconContent(icon = Icons.Default.VpnKey) {
+                        SettingsIconContent(icon = Icons.Default.Badge) {
                             McpLabeledField(
                                 label = stringResource(R.string.model_id_label),
                                 value = draft.modelId,
@@ -210,34 +207,19 @@ internal fun LocalChatModelEditor(
                     }
                     add {
                         ModelImportItem(
-                            title = if (draft.projectorPath.isBlank()) {
-                                stringResource(R.string.local_projector_import_title)
-                            } else {
-                                projectorName.ifBlank { stringResource(R.string.local_projector_title) }
-                            },
+                            title = stringResource(R.string.local_projector_title),
+                            filePath = draft.projectorPath,
                             description = stringResource(R.string.local_projector_desc),
                             icon = Icons.Default.Visibility,
+                            emptyIcon = Icons.Default.VisibilityOff,
+                            importedEffect = stringResource(R.string.local_projector_enabled),
                             importing = importingProjector == true,
                             enabled = !busy && !closed,
                             onClick = { pick(true) },
-                            trailingContent = if (draft.projectorPath.isNotBlank()) {
-                                {
-                                    IconButton(
-                                        enabled = !busy && !closed,
-                                        onClick = {
-                                            imports.discard(draft.projectorPath)
-                                            update(draft.copy(projectorPath = ""))
-                                            projectorName = ""
-                                        },
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Delete,
-                                            stringResource(R.string.remove),
-                                            tint = MaterialTheme.colorScheme.error,
-                                        )
-                                    }
-                                }
-                            } else null,
+                            onRemove = {
+                                imports.discard(draft.projectorPath)
+                                update(draft.copy(projectorPath = ""))
+                            },
                         )
                     }
                 },

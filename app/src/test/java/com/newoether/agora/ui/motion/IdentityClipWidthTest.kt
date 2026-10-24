@@ -94,6 +94,23 @@ class IdentityClipWidthTest {
         assertEquals(52.dp, width)
     }
     @Test
+    fun interruptedReturnToPreviousIdentityKeepsMovingFromTheCurrentEdge() {
+        start()
+        compose.runOnIdle { identity = "b"; target = 200.dp }
+        frames(160)
+        val beforeReturn = width
+        assertTrue("$beforeReturn", beforeReturn > 100.dp && beforeReturn < 200.dp)
+        compose.runOnIdle { identity = "a"; target = 100.dp }
+        frames(48)
+        val returning = width
+        assertTrue("Returning must not snap to its old target: $returning", returning > 100.dp)
+        frames(48)
+        assertTrue("Return must keep shrinking: $width", width > 100.dp && width < returning)
+        frames(IDENTITY_CLIP_DURATION_MILLIS.toLong())
+        assertEquals(100.dp, width)
+    }
+
+    @Test
     fun reducedMotionSnapsTheEdge() {
         start()
         compose.runOnIdle { spatial = false; identity = "b"; target = 60.dp }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.Check
@@ -425,17 +426,17 @@ internal fun EmbeddingModelEditor(
                     title = stringResource(R.string.embedding_model_label),
                     items = buildList {
                         add {
-                            SettingsIconContent(icon = Icons.Default.AutoAwesome) {
+                            SettingsIconContent(icon = Icons.Default.Badge) {
                                 if (isNew) {
                                     McpLabeledField(
-                                        label = stringResource(R.string.embedding_model_label),
+                                        label = stringResource(R.string.model_id_label),
                                         value = draft.modelName,
                                         onValueChange = { draft = draft.copy(modelName = it) },
                                         placeholder = stringResource(R.string.embedding_model_id_hint),
                                     )
                                 } else {
                                     ReadOnlyField(
-                                        stringResource(R.string.embedding_model_label),
+                                        stringResource(R.string.model_id_label),
                                         initial.remoteModelName,
                                         stringResource(R.string.embedding_model_locked_desc),
                                     )
@@ -449,7 +450,8 @@ internal fun EmbeddingModelEditor(
                     title = stringResource(R.string.embedding_model_file),
                     items = listOf {
                         ModelImportItem(
-                            title = draft.localFileName.ifBlank { stringResource(R.string.embedding_import_title) },
+                            title = stringResource(R.string.embedding_import_title),
+                            filePath = draft.localFilePath,
                             description = stringResource(R.string.embedding_import_desc),
                             icon = Icons.Default.AutoAwesome,
                             importing = isImporting,

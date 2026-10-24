@@ -540,6 +540,6 @@
     <string name="install_guide_help">Ajuda</string>
     <string name="install_guide_open_terminal">Abrir o terminal</string>
     <string name="install_guide_run_command">Copiar e executar o comando</string>
-    <string name="conch_guide_finish">Volte a Adicionar dispositivo. Insira o endereço do serviço e a chave API fornecidos pelo instalador, escolha um nome e salve.</string>
-    <string name="filo_guide_finish">Quando solicitado, escolha a conta Windows do cliente nativo. Volte a Adicionar dispositivo, insira a URL acessível do serviço e o token de acesso e salve. localhost só funciona no computador.</string>
+    <string name="conch_guide_finish">Adicione o dispositivo com o endereço do serviço e a chave API fornecidos pelo instalador.</string>
+    <string name="filo_guide_finish">Quando solicitado, escolha a conta Windows e as fontes. Depois, adicione o dispositivo com a URL do serviço e o token de acesso fornecidos pelo instalador.</string>
 </resources>

@@ -553,10 +553,10 @@
     <string name="filo_guide_selected_user">Select the Windows account that runs the native client. Codex Desktop access requires it to be installed and initialized for that account.</string>
     <string name="filo_guide_address_mapping">Enter the target’s reachable tailnet IPv4 service URL. localhost works only on the target computer.</string>
     <string name="filo_guide_token_mapping">Copy the installer’s access token into Access token. Keep the token private.</string>
-    <string name="filo_guide_scope">Sources and controls depend on the installed clients and advertised capabilities. Claude Code requires its opted-in Mod. Chat and Cowork are not supported.</string>
+    <string name="filo_guide_scope">The installer detects Codex Desktop, Codex CLI, Claude Code, and Claude Desktop. Choose the sources to integrate; required components, including the Claude Mod, are installed automatically. Installed sources remain visible while offline. Claude Desktop supports Code only; Chat and Cowork are not supported.</string>
     <string name="install_guide_help">Help</string>
     <string name="install_guide_open_terminal">Open the Terminal</string>
     <string name="install_guide_run_command">Copy and Run the Command</string>
-    <string name="conch_guide_finish">Return to Add Device. Enter the installer’s service address and API key, choose a name, then save.</string>
-    <string name="filo_guide_finish">Choose the Windows account used by your native client when prompted. Return to Add Device, enter the reachable service URL and access token, then save. localhost only works on the computer.</string>
+    <string name="conch_guide_finish">Add the device with the service address and API key shown by the installer.</string>
+    <string name="filo_guide_finish">Choose the Windows account and sources when prompted. Then add the device with the service URL and access token shown by the installer.</string>
 </resources>

@@ -28,8 +28,14 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.ui.platform.testTag
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -243,6 +249,36 @@ fun CollapsingSettingsScaffold(
     }
 }
 
+/** Optional pull-to-refresh around a lazy settings list; the indicator drops in below the bar. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsPullRefresh(
+    refreshing: Boolean,
+    onRefresh: (() -> Unit)?,
+    indicatorTop: Dp,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    if (onRefresh == null) {
+        Box(Modifier.fillMaxSize(), content = content)
+        return
+    }
+    val state = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = onRefresh,
+        modifier = Modifier.fillMaxSize().testTag("settings-pull-refresh"),
+        state = state,
+        indicator = {
+            PullToRefreshDefaults.Indicator(
+                state = state,
+                isRefreshing = refreshing,
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = indicatorTop),
+            )
+        },
+        content = content,
+    )
+}
+
 /**
  * Collapsing-large-title scaffold for **LazyColumn** settings sub-pages (dynamic lists). Uses the
  * exact mechanism of the Settings home page: a tall header spacer (item 0) holds the big title and
@@ -258,6 +294,8 @@ fun CollapsingSettingsLazyScaffold(
     contentBottomPadding: Dp = 32.dp,
     actions: @Composable RowScope.() -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
+    refreshing: Boolean = false,
+    onRefresh: (() -> Unit)? = null,
     content: LazyListScope.() -> Unit
 ) {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -275,6 +313,7 @@ fun CollapsingSettingsLazyScaffold(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        SettingsPullRefresh(refreshing, onRefresh, statusBarTop + SettingsBarHeight) {
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -291,6 +330,7 @@ fun CollapsingSettingsLazyScaffold(
             item { Spacer(modifier = Modifier.height(titleAreaHeight)) }
             content()
             item { Spacer(modifier = Modifier.height(contentBottomPadding)) }
+        }
         }
         CollapsingSettingsTitleBar(
             title = title,

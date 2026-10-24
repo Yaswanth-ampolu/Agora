@@ -540,6 +540,6 @@
     <string name="install_guide_help">ヘルプ</string>
     <string name="install_guide_open_terminal">ターミナルを開く</string>
     <string name="install_guide_run_command">コマンドをコピーして実行する</string>
-    <string name="conch_guide_finish">デバイスの追加に戻り、インストーラーが表示したサービスアドレスと API キーを入力し、名前を付けて保存します。</string>
-    <string name="filo_guide_finish">指示に従ってネイティブクライアントを使う Windows アカウントを選びます。デバイスの追加に戻り、接続可能なサービス URL とアクセストークンを入力して保存します。localhost はコンピューター上でのみ使えます。</string>
+    <string name="conch_guide_finish">インストーラーが表示したサービスアドレスと API キーでデバイスを追加します。</string>
+    <string name="filo_guide_finish">指示に従って Windows アカウントと接続元を選び、インストーラーが表示したサービス URL とアクセストークンでデバイスを追加します。</string>
 </resources>

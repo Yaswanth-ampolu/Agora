@@ -9,12 +9,17 @@ import org.junit.Test
 import org.w3c.dom.Element
 
 class ModelImportWiringTest {
-    @Test fun localChatAndProjectorUseTheSharedPrimaryImportRow() {
+    @Test fun localChatAndProjectorUseTheSharedImportStates() {
         val editor = source("LocalChatModelEditor.kt")
         assertEquals(2, Regex("ModelImportItem\\(").findAll(editor).count())
         assertTrue(editor.contains("R.string.local_chat_import_title"))
         assertTrue(editor.contains("R.string.local_chat_import_desc"))
-        assertTrue(editor.contains("R.string.local_projector_import_title"))
+        assertTrue(editor.contains("title = stringResource(R.string.local_projector_title)"))
+        assertTrue(editor.contains("filePath = draft.projectorPath"))
+        assertTrue(editor.contains("filePath = draft.modelPath"))
+        assertTrue(editor.contains("emptyIcon = Icons.Default.VisibilityOff"))
+        assertTrue(editor.contains("importedEffect = stringResource(R.string.local_projector_enabled)"))
+        assertTrue(editor.contains("SettingsIconContent(icon = Icons.Default.Badge)"))
         assertTrue(editor.contains("description = stringResource(R.string.local_projector_desc)"))
         assertTrue(editor.contains("importing = importingProjector == false"))
         assertTrue(editor.contains("importing = importingProjector == true"))
@@ -44,13 +49,16 @@ class ModelImportWiringTest {
         assertTrue(files.map { it.parentFile.name }.containsAll(expectedLocales))
         val suffixes = mapOf(
             "embedding_import_title" to " (.gguf)",
-            "local_chat_import_title" to " (.gguf)",
-            "local_projector_import_title" to " (.mmproj)"
+            "local_chat_import_title" to " (.gguf)"
         )
         val builder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
         for (file in files) {
             val nodes = builder.parse(file).getElementsByTagName("string")
             val strings = (0 until nodes.length).map { nodes.item(it) as Element }
+            for (name in listOf("model_import_not_imported", "model_import_file_missing", "local_projector_enabled")) {
+                assertEquals("${file.path}: $name", 1, strings.count { it.getAttribute("name") == name })
+            }
+            assertFalse(strings.any { it.getAttribute("name") == "local_projector_import_title" })
             for ((name, suffix) in suffixes) {
                 val matches = strings.filter { it.getAttribute("name") == name }
                 assertEquals("${file.path}: $name must occur once", 1, matches.size)

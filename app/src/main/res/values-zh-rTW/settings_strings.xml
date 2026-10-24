@@ -545,6 +545,6 @@
     <string name="install_guide_help">說明</string>
     <string name="install_guide_open_terminal">開啟終端機</string>
     <string name="install_guide_run_command">複製並執行指令</string>
-    <string name="conch_guide_finish">返回新增裝置，填入安裝程式提供的服務位址和 API 金鑰，命名後儲存。</string>
-    <string name="filo_guide_finish">依提示選擇執行原生用戶端的 Windows 帳戶。返回新增裝置，填入可連線的服務 URL 和存取權杖後儲存。localhost 僅適用於電腦本機。</string>
+    <string name="conch_guide_finish">使用安裝程式提供的服務位址和 API 金鑰新增裝置。</string>
+    <string name="filo_guide_finish">依提示選擇 Windows 帳戶和來源，然後使用安裝程式提供的服務 URL 和存取權杖新增裝置。</string>
 </resources>

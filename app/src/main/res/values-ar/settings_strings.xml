@@ -540,6 +540,6 @@
     <string name="install_guide_help">مساعدة</string>
     <string name="install_guide_open_terminal">افتح الطرفية</string>
     <string name="install_guide_run_command">انسخ الأمر وشغّله</string>
-    <string name="conch_guide_finish">ارجع إلى إضافة جهاز. أدخل عنوان الخدمة ومفتاح API من برنامج التثبيت، واختر اسمًا ثم احفظ.</string>
-    <string name="filo_guide_finish">اختر حساب Windows المستخدم للعميل الأصلي عند الطلب. ارجع إلى إضافة جهاز، وأدخل عنوان URL للخدمة القابل للوصول ورمز الوصول ثم احفظ. يعمل localhost على الكمبيوتر نفسه فقط.</string>
+    <string name="conch_guide_finish">أضف الجهاز باستخدام عنوان الخدمة ومفتاح API اللذين يعرضهما برنامج التثبيت.</string>
+    <string name="filo_guide_finish">اختر حساب Windows والمصادر عند الطلب، ثم أضف الجهاز باستخدام عنوان URL للخدمة ورمز الوصول اللذين يعرضهما برنامج التثبيت.</string>
 </resources>

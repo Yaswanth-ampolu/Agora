@@ -67,14 +67,15 @@ class EmbeddingModelEditorSourceContractTest {
     }
 
     @Test
-    fun remoteModelUsesStarsAndOneHintedFieldWithoutPresetChips() {
+    fun remoteModelUsesBadgeAndOneHintedIdFieldWithoutPresetChips() {
         val editor = readSettingsSource("EmbeddingModelEditor.kt")
         val model = editor.section(
             "title = stringResource(R.string.embedding_model_label)",
             "} else if (isNew) {\n                SettingsGroup(",
         )
 
-        assertTrue(model.contains("SettingsIconContent(icon = Icons.Default.AutoAwesome)"))
+        assertTrue(model.contains("SettingsIconContent(icon = Icons.Default.Badge)"))
+        assertEquals(2, Regex("R.string.model_id_label").findAll(model).count())
         assertEquals(1, Regex("""\bMcpLabeledField\(""").findAll(model).count())
         assertTrue(model.contains("value = draft.modelName"))
         assertTrue(model.contains("placeholder = stringResource(R.string.embedding_model_id_hint)"))
@@ -96,14 +97,15 @@ class EmbeddingModelEditorSourceContractTest {
         assertTrue(filePickerGroup.contains("title = stringResource(R.string.embedding_model_file)"))
         assertFalse(filePickerGroup.contains("headlineContent = { Text(stringResource(R.string.embedding_model_file)) }"))
         assertTrue(filePickerGroup.contains("ModelImportItem("))
-        assertTrue(filePickerGroup.contains("draft.localFileName.ifBlank { stringResource(R.string.embedding_import_title) }"))
+        assertTrue(filePickerGroup.contains("title = stringResource(R.string.embedding_import_title)"))
+        assertTrue(filePickerGroup.contains("filePath = draft.localFilePath"))
         assertTrue(filePickerGroup.contains("description = stringResource(R.string.embedding_import_desc)"))
         assertTrue(filePickerGroup.contains("Icons.Default.AutoAwesome"))
         assertTrue(filePickerGroup.contains("importing = isImporting"))
         assertFalse(filePickerGroup.contains("trailingContent"))
         val item = readSettingsSource("ModelImportItem.kt")
         assertTrue(item.contains("enabled = enabled && !importing"))
-        assertTrue(item.contains("targetState = importing"))
+        assertTrue(item.contains("targetState = Triple(importing, imported, missing)"))
         assertTrue(item.contains("MotionAwareCircularProgressIndicator("))
         assertTrue(filePickerGroup.contains("filePicker.launch(arrayOf(\"*/*\"))"))
         assertFalse(filePickerGroup.contains("isNew && draft.localFilePath.isBlank()"))

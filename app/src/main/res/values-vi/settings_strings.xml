@@ -540,6 +540,6 @@
     <string name="install_guide_help">Trợ giúp</string>
     <string name="install_guide_open_terminal">Mở terminal</string>
     <string name="install_guide_run_command">Sao chép và chạy lệnh</string>
-    <string name="conch_guide_finish">Quay lại Thêm thiết bị. Nhập địa chỉ dịch vụ và khóa API từ trình cài đặt, đặt tên rồi lưu.</string>
-    <string name="filo_guide_finish">Khi được hỏi, chọn tài khoản Windows dùng cho ứng dụng gốc. Quay lại Thêm thiết bị, nhập URL dịch vụ có thể truy cập và mã truy cập rồi lưu. localhost chỉ hoạt động trên máy tính đó.</string>
+    <string name="conch_guide_finish">Thêm thiết bị bằng địa chỉ dịch vụ và khóa API do trình cài đặt hiển thị.</string>
+    <string name="filo_guide_finish">Khi được hỏi, chọn tài khoản Windows và các nguồn. Sau đó thêm thiết bị bằng URL dịch vụ và mã truy cập do trình cài đặt hiển thị.</string>
 </resources>

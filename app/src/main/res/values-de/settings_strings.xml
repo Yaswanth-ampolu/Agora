@@ -540,6 +540,6 @@
     <string name="install_guide_help">Hilfe</string>
     <string name="install_guide_open_terminal">Terminal öffnen</string>
     <string name="install_guide_run_command">Befehl kopieren und ausführen</string>
-    <string name="conch_guide_finish">Kehre zu Gerät hinzufügen zurück. Gib die Dienstadresse und den API-Schlüssel aus der Installation ein, wähle einen Namen und speichere.</string>
-    <string name="filo_guide_finish">Wähle bei Aufforderung das Windows-Konto des nativen Clients. Kehre zu Gerät hinzufügen zurück, gib die erreichbare Dienst-URL und das Zugriffstoken ein und speichere. localhost funktioniert nur auf dem Computer.</string>
+    <string name="conch_guide_finish">Füge das Gerät mit der Dienstadresse und dem API-Schlüssel aus der Installation hinzu.</string>
+    <string name="filo_guide_finish">Wähle bei Aufforderung das Windows-Konto und die Quellen. Füge dann das Gerät mit der Dienst-URL und dem Zugriffstoken aus der Installation hinzu.</string>
 </resources>

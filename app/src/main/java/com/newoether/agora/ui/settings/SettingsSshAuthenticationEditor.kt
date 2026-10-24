@@ -153,7 +153,11 @@ internal fun SettingsSshAuthenticationEditor(
         if (device.sshAuthMode == SSH_AUTH_PRIVATE_KEY) {
             add {
                 ModelImportItem(
-                    title = device.sshPrivateKeyName.ifBlank { stringResource(R.string.shell_ssh_import_private_key) },
+                    title = stringResource(R.string.shell_ssh_import_private_key),
+                    importedFile = if (device.sshPrivateKey.isBlank()) null else ModelImportFileInfo(
+                        device.sshPrivateKeyName.ifBlank { stringResource(R.string.shell_ssh_auth_private_key) },
+                        device.sshPrivateKey.toByteArray(Charsets.UTF_8).size.toLong(),
+                    ),
                     description = stringResource(R.string.shell_ssh_private_key_desc),
                     icon = Icons.Default.UploadFile,
                     importing = importing,

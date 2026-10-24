@@ -540,6 +540,6 @@
     <string name="install_guide_help">Справка</string>
     <string name="install_guide_open_terminal">Откройте терминал</string>
     <string name="install_guide_run_command">Скопируйте и выполните команду</string>
-    <string name="conch_guide_finish">Вернитесь в раздел добавления устройства. Введите адрес службы и ключ API из установщика, задайте имя и сохраните.</string>
-    <string name="filo_guide_finish">По запросу выберите учётную запись Windows нативного клиента. Вернитесь к добавлению устройства, введите доступный URL службы и токен доступа и сохраните. localhost работает только на самом компьютере.</string>
+    <string name="conch_guide_finish">Добавьте устройство, указав адрес службы и ключ API из установщика.</string>
+    <string name="filo_guide_finish">По запросу выберите учётную запись Windows и источники. Затем добавьте устройство, указав URL службы и токен доступа из установщика.</string>
 </resources>

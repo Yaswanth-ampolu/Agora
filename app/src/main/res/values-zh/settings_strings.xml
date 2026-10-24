@@ -553,10 +553,10 @@
     <string name="filo_guide_selected_user">选择运行原生客户端的 Windows 账户。使用 Codex Desktop 时，需先为该账户安装并完成初始化。</string>
     <string name="filo_guide_address_mapping">填写目标电脑可访问的 tailnet IPv4 服务 URL，localhost 仅能在目标电脑本机访问。</string>
     <string name="filo_guide_token_mapping">将安装器给出的访问令牌填入访问令牌字段，请妥善保管。</string>
-    <string name="filo_guide_scope">可用来源和操作取决于已安装的客户端及其公布的能力。Claude Code 需主动启用 Mod，不支持 Chat 和 Cowork。</string>
+    <string name="filo_guide_scope">安装程序会自动发现 Codex Desktop、Codex CLI、Claude Code 和 Claude Desktop，供你选择要接入的来源，并自动安装所需组件，包括 Claude Mod。已安装的来源离线时仍会显示。Claude Desktop 仅支持 Code，不支持 Chat 和 Cowork。</string>
     <string name="install_guide_help">帮助</string>
     <string name="install_guide_open_terminal">打开终端</string>
     <string name="install_guide_run_command">复制并执行命令</string>
-    <string name="conch_guide_finish">返回添加设备，填写安装程序给出的服务地址和 API 密钥，起个名称后保存。</string>
-    <string name="filo_guide_finish">按提示选择运行原生客户端的 Windows 账户。返回添加设备，填写可访问的服务 URL 和访问令牌后保存。localhost 仅在电脑本机可用。</string>
+    <string name="conch_guide_finish">用安装程序给出的服务地址和 API 密钥添加设备。</string>
+    <string name="filo_guide_finish">按提示选择 Windows 账户和来源，然后用安装程序给出的服务 URL 和访问令牌添加设备。</string>
 </resources>
