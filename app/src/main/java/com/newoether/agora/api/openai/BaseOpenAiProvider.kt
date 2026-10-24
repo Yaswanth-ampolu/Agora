@@ -288,6 +288,7 @@ abstract class BaseOpenAiProvider : LlmProvider {
                             val errorRaw = handle.errorBody.orEmpty()
                             val hasV1Fallback = endpointIndex + 1 < endpointUrls.size
                             if (hasV1Fallback &&
+                                !ProviderRetryPolicy.shouldRetryHttp(handle.code, errorRaw, retryableStatusCodes) &&
                                 !ProviderRetryPolicy.isResponseReadHttpFailure(handle.code, errorRaw) &&
                                 !ProviderRetryPolicy.isPermanentHttpFailure(handle.code, errorRaw)
                             ) {
@@ -313,7 +314,10 @@ abstract class BaseOpenAiProvider : LlmProvider {
                                     retryableStatusCodes,
                                 ) && attempt < maxAttempts
                             ) {
-                                val retryDelayMs = retryDelayMillis(attempt)
+                                val retryDelayMs = maxOf(
+                                    retryDelayMillis(attempt),
+                                    com.newoether.agora.util.NetworkRetryPolicy.retryAfterMillis(handle.retryAfter) ?: 0L,
+                                )
                                 DebugLog.w("AgoraAPI", "[$name] Transient error ${handle.code} on attempt $attempt/$maxAttempts, retrying in ${retryDelayMs}ms...")
                                 emit(StreamEvent.Retrying(attempt, ProviderRetryPolicy.MAX_RETRIES))
                                 delay(retryDelayMs)
@@ -505,11 +509,11 @@ abstract class BaseOpenAiProvider : LlmProvider {
                 handle.readLine()
             } catch (e: SocketTimeoutException) {
                 if (!currentCoroutineContext().isActive) break
-                streamError = e.asRetryableResponseBodyReadError()
-                if (streamError != null) break
                 // A semantic terminal event already completed the model response. This timeout
                 // only closes its optional usage/[DONE] grace tail and is therefore success.
                 if (terminalDeadlineNanos != null) break
+                streamError = e.asRetryableResponseBodyReadError()
+                if (streamError != null) break
                 if (++consecutiveReadTimeouts >= 3) {
                     timedOut = true
                     break

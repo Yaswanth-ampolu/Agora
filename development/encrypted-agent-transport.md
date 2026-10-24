@@ -33,6 +33,16 @@ read bounds and legitimate key rotation. A source fix, a passed focused test and
 installed fleet update are distinct statuses. Do not declare the old mobile parser
 safe merely because a server can emit authenticated framing metadata.
 
+## Agora Conch retries
+
+Conch handshake GETs and read-only file/job requests silently use Agora's shared five-retry budget.
+Read-only encrypted POST retries rebuild the complete envelope with fresh keys and nonce; never
+resend a previously accepted encrypted envelope. The safe list is file read/image/glob/grep and job
+list/get. Mutating file/job requests and command stream opening retry only proven pre-connect
+failures. Once a command may have been sent, neither a response error nor stream interruption
+permits command replay. Authentication/framing failures and cancellation are terminal.
+This policy does not change the Filo channel below.
+
 ## Shared Filo channel
 
 Filo uses Conch's Go `crypto` and `encryptedhttp` packages without a separate

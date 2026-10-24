@@ -2,6 +2,7 @@ package com.newoether.agora.api.util
 
 import com.newoether.agora.api.GenerationError
 import com.newoether.agora.api.StreamEvent
+import com.newoether.agora.util.NetworkRetryPolicy
 
 /**
  * How a streaming provider response actually ended.
@@ -42,17 +43,15 @@ internal data class StreamTermination(
     /**
      * Response-read failures always consume the existing retry budget. Their failed attempt is
      * explicitly replaced before replay, so prior successful tool passes stay intact. Other
-     * failures retain the no-output and token-cap gates. Cancellation never reaches this decision.
+     * transient failures also replace partial output; token-cap results are terminal.
+     * Cancellation never reaches this decision.
      */
     val isRetryable: Boolean
         get() = !alreadyReportedError &&
             (ProviderRetryPolicy.requiresResponseReadRetry(streamError) ||
-                (!producedContent && !truncatedByTokenCap &&
-                    when (val error = streamError) {
-                        is GenerationError.Api -> ProviderRetryPolicy.shouldRetryStreamError(error)
-                        null -> timedOut || toolCallInFlight || !sawTerminalMarker
-                        else -> retryableStreamError || ProviderRetryPolicy.shouldRetryStreamError(error)
-                    }))
+                (!truncatedByTokenCap &&
+                    if (streamError == null) timedOut || toolCallInFlight || !sawTerminalMarker
+                    else ProviderRetryPolicy.shouldRetryStreamError(streamError)))
 
     /** Terminal diagnostic to surface, or null when the stream ended cleanly. */
     fun toError(provider: String): GenerationError? = when {
@@ -84,84 +83,33 @@ internal data class StreamTermination(
     }
 }
 
-/**
- * Maps a transport exception raised while OPENING the request to a retryable error, or null when
- * replaying cannot help.
- *
- * These are thrown by `call.execute()` before any response headers exist, so they escaped the
- * providers' retry loops entirely and surfaced as a hard failure on the first flaky connection.
- * Nothing has been streamed at that point, so a replay is always safe.
- *
- * Ordinary [java.net.UnknownHostException] failures remain excluded because they usually mean a
- * wrong base URL or absent connectivity. The explicit unreadable-response outcome takes priority.
- */
-internal fun Throwable.asRetryableTransportError(): GenerationError? {
-    asUnreadableServerResponseError()?.let { return it }
-    return when (this) {
-        // SocketTimeoutException extends InterruptedIOException, so the order of these matters.
-        is java.net.SocketTimeoutException -> GenerationError.Timeout
-        is java.io.InterruptedIOException -> GenerationError.Timeout
-        is java.net.ConnectException ->
-            GenerationError.Network(statusCode = 0, message = localizedMessage ?: "Connection refused")
-        is java.net.SocketException ->
-            GenerationError.Network(statusCode = 0, message = localizedMessage ?: "Connection reset")
-        is javax.net.ssl.SSLException ->
-            GenerationError.Network(statusCode = 0, message = localizedMessage ?: "TLS failure")
-        is java.net.UnknownHostException -> null
-        else -> asRetryableResponseBodyReadError()
-            ?: matchingFailureMessage(ProviderRetryPolicy::isFailedToGenerateOutcome)?.let { message ->
-                GenerationError.Network(statusCode = 0, message = message)
-            }
-    }
-}
+/** Provider replay is owned by the provider loop, including failures while reading a body. */
+internal fun Throwable.asRetryableTransportError(): GenerationError? = retryableNetworkError()
 
-private fun Throwable.asUnreadableServerResponseError(): GenerationError? =
-    matchingFailureMessage(
-        ProviderRetryPolicy::isUnreadableServerResponseFailure,
-        allowDns = true,
-    )?.let { GenerationError.Network(statusCode = 0, message = it) }
+internal fun Throwable.asRetryableResponseBodyReadError(): GenerationError? = retryableNetworkError()
 
-/** Body reads retain exact unreadable-response priority before other transport classification. */
-internal fun Throwable.asRetryableResponseBodyReadError(): GenerationError? =
-    asUnreadableServerResponseError() ?: matchingFailureMessage(
-        ProviderRetryPolicy::isUnreadableServerResponseFailure,
-        includePrematureEof = true,
-    )?.let { message ->
-        GenerationError.Network(statusCode = 0, message = message)
+private fun Throwable.retryableNetworkError(): GenerationError? {
+    NetworkRetryPolicy.throwIfCancelled(this)
+    if (!NetworkRetryPolicy.isTransient(this)) {
+        return NetworkRetryPolicy.causes(this).firstOrNull {
+            ProviderRetryPolicy.isFailedToGenerateOutcome(it.message)
+        }?.let { GenerationError.Network(0, it.message.orEmpty()) }
     }
-
-private fun Throwable.matchingFailureMessage(
-    matches: (String?) -> Boolean,
-    includePrematureEof: Boolean = false,
-    allowDns: Boolean = false,
-): String? {
-    val visited = mutableSetOf<Throwable>()
-    var failure: Throwable? = this
-    var matchedMessage: String? = null
-    while (failure != null && visited.add(failure)) {
-        if ((!allowDns && failure is java.net.UnknownHostException) ||
-            failure is kotlinx.coroutines.CancellationException
-        ) return null
-        if (matchedMessage == null) {
-            matchedMessage = when {
-                includePrematureEof && failure is java.io.EOFException ->
-                    failure.localizedMessage ?: "Unexpected end of stream (EOFException)"
-                matches(failure.localizedMessage) -> failure.localizedMessage
-                includePrematureEof && failure is java.io.IOException &&
-                    ProviderRetryPolicy.isUnexpectedEndFailure(failure.localizedMessage) ->
-                    failure.localizedMessage
-                else -> null
-            }
-        }
-        failure = failure.cause
-    }
-    return matchedMessage
+    val chain = NetworkRetryPolicy.causes(this)
+    val detail = chain.firstOrNull { ProviderRetryPolicy.isUnreadableServerResponseFailure(it.message) }
+        ?: chain.firstOrNull { NetworkRetryPolicy.isTransientMessage(it.message) }
+        ?: chain.last()
+    return GenerationError.Network(
+        statusCode = 0,
+        message = detail.message?.takeIf { NetworkRetryPolicy.isTransientMessage(it) }
+            ?: "The server response could not be read. (${detail.javaClass.simpleName})",
+    )
 }
 
 /**
  * True for substantive model output. Formatting-only chunks keep the current pass empty; usage /
- * retry / error bookkeeping does not count. Tool events and thinking signatures prevent ordinary
- * replay; explicit response-read failures replace even those partially surfaced attempts.
+ * retry / error bookkeeping does not count. The provider uses this flag to roll back only the
+ * failed attempt before replay, preserving earlier completed tool passes.
  */
 internal fun StreamEvent.carriesModelOutput(): Boolean = when (this) {
     is StreamEvent.TextChunk -> text.isNotBlank()

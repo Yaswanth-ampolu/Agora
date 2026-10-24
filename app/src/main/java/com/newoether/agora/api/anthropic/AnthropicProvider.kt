@@ -551,7 +551,7 @@ class AnthropicProvider(
                             retryableCodes,
                         ) && attempt < maxAttempts
                     ) {
-                        val retryDelayMs = ProviderRetryPolicy.delayMillis(attempt)
+                        val retryDelayMs = ProviderRetryPolicy.delayMillis(attempt, handle.retryAfter)
                         DebugLog.w("AgoraAPI", "[$name] Transient error ${handle.code} on attempt $attempt/$maxAttempts, retrying in ${retryDelayMs}ms...")
                         emit(StreamEvent.Retrying(attempt, ProviderRetryPolicy.MAX_RETRIES))
                         delay(retryDelayMs)

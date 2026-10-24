@@ -2,11 +2,12 @@ package com.newoether.agora.api.util
 
 import com.newoether.agora.api.GenerationError
 import com.newoether.agora.api.providerHttpError
+import com.newoether.agora.util.NetworkRetryPolicy
 
 /** One initial provider request plus five retries. */
 internal object ProviderRetryPolicy {
-    const val MAX_RETRIES = 5
-    const val MAX_ATTEMPTS = MAX_RETRIES + 1
+    const val MAX_RETRIES = NetworkRetryPolicy.MAX_RETRIES
+    const val MAX_ATTEMPTS = NetworkRetryPolicy.MAX_ATTEMPTS
 
     private val retryableUpstreamMessages = listOf(
         "failed to generate",
@@ -27,6 +28,7 @@ internal object ProviderRetryPolicy {
         "invalid_request", "invalid_request_error", "invalid_argument", "bad_request",
         "context_length_exceeded", "model_not_found",
         "unsupported_parameter", "unsupported_value", "content_policy_violation",
+        "400", "404", "422",
     )
     private val permanentErrorMessages = listOf(
         "insufficient quota", "quota exhausted", "quota has been exhausted",
@@ -43,15 +45,14 @@ internal object ProviderRetryPolicy {
     private val retryableErrorIdentifiers = setOf(
         "rate_limit_error", "rate_limit_exceeded", "too_many_requests", "overloaded_error",
         "server_error", "internal_error", "internal_server_error", "unavailable",
-        "resource_exhausted", "failed_to_generate", "429", "500", "502", "503", "504", "529",
+        "resource_exhausted", "failed_to_generate", "408", "425", "429", "500", "502", "503", "504", "529",
     )
 
     /** Delay before retry number [retryNumber], where valid retries are 1 through 5. */
-    fun delayMillis(retryNumber: Int): Long = when (retryNumber) {
-        in 1..3 -> 5_000L
-        in 4..5 -> 30_000L
-        else -> error("Invalid retry number: $retryNumber")
-    }
+    fun delayMillis(retryNumber: Int): Long = NetworkRetryPolicy.delayMillis(retryNumber)
+
+    fun delayMillis(retryNumber: Int, retryAfter: String?): Long =
+        NetworkRetryPolicy.delayMillis(retryNumber, retryAfter)
 
     /** Relay outcome used when the upstream accepted a request but failed to produce a generation. */
     fun isFailedToGenerateOutcome(raw: String?): Boolean =
@@ -77,19 +78,14 @@ internal object ProviderRetryPolicy {
     fun requiresResponseReadRetry(error: GenerationError?): Boolean {
         return when (error) {
             is GenerationError.SseParse -> true
-            is GenerationError.Api -> isUnreadableServerResponseFailure(error.message)
-            is GenerationError.Network -> isUnreadableServerResponseFailure(error.message)
-            is GenerationError.Unknown -> {
-                val seen = mutableSetOf<Throwable>()
-                var failure: Throwable? = error.cause
-                var matches = false
-                while (failure != null && seen.add(failure)) {
-                    if (failure is kotlinx.coroutines.CancellationException) return false
-                    matches = matches || isUnreadableServerResponseFailure(failure.localizedMessage)
-                    failure = failure.cause
-                }
-                matches
-            }
+            is GenerationError.Api -> (isUnreadableServerResponseFailure(error.message) ||
+                NetworkRetryPolicy.isTransientMessage(error.message)) && !isPermanentApiFailure(error)
+            is GenerationError.Network -> (error.statusCode !in 400..499 ||
+                error.statusCode in NetworkRetryPolicy.HTTP_CODES) &&
+                (isUnreadableServerResponseFailure(error.message) ||
+                    NetworkRetryPolicy.isTransientMessage(error.message))
+            GenerationError.Timeout -> true
+            is GenerationError.Unknown -> NetworkRetryPolicy.isTransient(error.cause)
             else -> false
         }
     }
@@ -101,7 +97,8 @@ internal object ProviderRetryPolicy {
         } || permanentErrorMessages.any { error.message.contains(it, ignoreCase = true) }
 
     fun isPermanentHttpFailure(statusCode: Int, body: String?): Boolean =
-        statusCode in setOf(401, 403) || isPermanentApiFailure(providerHttpError(statusCode, body))
+        statusCode in 400..499 && statusCode !in NetworkRetryPolicy.HTTP_CODES ||
+            isPermanentApiFailure(providerHttpError(statusCode, body))
 
     /** Inspect decoded fields too, since a JSON error message can contain Unicode escapes. */
     fun isResponseReadHttpFailure(statusCode: Int, body: String?): Boolean =
@@ -110,20 +107,25 @@ internal object ProviderRetryPolicy {
 
     /** Other permanent HTTP failures retain their existing non-retryable semantics. */
     fun shouldRetryHttp(statusCode: Int, body: String?, retryableStatusCodes: Set<Int>): Boolean =
-        isResponseReadHttpFailure(statusCode, body) ||
-            (!isPermanentHttpFailure(statusCode, body) &&
-                (statusCode in retryableStatusCodes || isRetryableUpstreamFailure(body)))
+        !isPermanentHttpFailure(statusCode, body) &&
+            (isResponseReadHttpFailure(statusCode, body) ||
+                statusCode in NetworkRetryPolicy.HTTP_CODES ||
+                (statusCode !in 400..499 && statusCode in retryableStatusCodes) ||
+                (statusCode !in 400..499 && isRetryableUpstreamFailure(body)))
 
-    /** Response-read failures take priority; all other API errors need transient evidence. */
+    /** Permanent account/request failures always take priority over transient wording. */
     fun shouldRetryStreamError(error: GenerationError?): Boolean =
         requiresResponseReadRetry(error) || when (error) {
             is GenerationError.Api -> !isPermanentApiFailure(error) && (
                 listOfNotNull(error.code, error.type).any {
                     it.trim().lowercase() in retryableErrorIdentifiers
-                } || isRetryableUpstreamFailure(error.message)
+                } || isRetryableUpstreamFailure(error.message) || NetworkRetryPolicy.isTransientMessage(error.message)
             )
             is GenerationError.Network ->
-                isRetryableUpstreamFailure(error.message) || isUnexpectedEndFailure(error.message)
+                (error.statusCode !in 400..499 || error.statusCode in NetworkRetryPolicy.HTTP_CODES) &&
+                    (error.statusCode in NetworkRetryPolicy.HTTP_CODES ||
+                        isRetryableUpstreamFailure(error.message) ||
+                        NetworkRetryPolicy.isTransientMessage(error.message))
             else -> false
         }
 }

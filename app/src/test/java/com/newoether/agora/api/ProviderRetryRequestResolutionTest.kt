@@ -42,6 +42,7 @@ class ProviderRetryRequestResolutionTest {
         every { DebugLog.e(any(), any()) } just Runs
         every { DebugLog.w(any(), any()) } just Runs
         every { ProviderRetryPolicy.delayMillis(any()) } returns 1L
+        every { ProviderRetryPolicy.delayMillis(any(), any()) } returns 1L
     }
 
     @After

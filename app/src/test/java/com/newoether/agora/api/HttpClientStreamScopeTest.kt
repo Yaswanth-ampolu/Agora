@@ -51,14 +51,31 @@ class HttpClientStreamScopeTest {
         val failures = listOf(
             IOException("Unrelated body read failure"),
             IOException("Outer failure", IllegalStateException("Invalid ordinary payload")),
-            SocketTimeoutException("Read timed out"),
-            EOFException("unexpected end of stream"),
         )
         for (maxErrorBytes in listOf<Long?>(null, 1_024L)) {
             for (failure in failures) {
                 val handle = streamHandleWithFailingBody(failure, maxErrorBytes)
                 try {
                     assertNull(handle.errorBody)
+                } finally {
+                    handle.close()
+                }
+            }
+        }
+    }
+
+    @Test
+    fun errorBodyPreservesTransientReadFailuresForProviderRetry() {
+        val failures = listOf(
+            SocketTimeoutException("Read timed out"),
+            EOFException("unexpected end of stream"),
+            IOException("socket is closed"),
+        )
+        for (maxErrorBytes in listOf<Long?>(null, 1_024L)) {
+            for (failure in failures) {
+                val handle = streamHandleWithFailingBody(failure, maxErrorBytes)
+                try {
+                    assertEquals(failure.message, handle.errorBody)
                 } finally {
                     handle.close()
                 }

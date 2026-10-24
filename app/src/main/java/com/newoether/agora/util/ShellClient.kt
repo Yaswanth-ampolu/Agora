@@ -340,6 +340,7 @@ class ShellClient(
             lastError = null
             true
         } catch (e: Exception) {
+            NetworkRetryPolicy.throwIfCancelled(e)
             lastError = describeConchConnectionFailure(serverUrl, e)
             DebugLog.w("ShellClient", lastError!!)
             false
@@ -437,6 +438,14 @@ class ShellClient(
         path: String,
         payload: String,
         callTimeoutMillis: Long? = null,
+    ): String = ConchNetwork.retryRead(path) {
+        encryptedPostOnce(path, payload, callTimeoutMillis)
+    }
+
+    private suspend fun encryptedPostOnce(
+        path: String,
+        payload: String,
+        callTimeoutMillis: Long?,
     ): String {
         if (apiKey.isBlank()) {
             val response = try {
@@ -445,15 +454,19 @@ class ShellClient(
                     payload,
                     mapOf("Content-Type" to "application/json"),
                     callTimeoutMillis,
+                    replaySafe = ConchNetwork.isReadOnly(path),
+                    maxRetries = if (ConchNetwork.isReadOnly(path)) 0 else NetworkRetryPolicy.MAX_RETRIES,
                 )
             } catch (e: Exception) {
+                NetworkRetryPolicy.throwIfCancelled(e)
                 throw IllegalStateException(
                     describeConchRequestFailure(serverUrl, "$path request", e),
                     e,
                 )
             }
             if (!response.isSuccessful) {
-                throw IllegalStateException(
+                throw NetworkHttpException(
+                    response.code, response.retryAfter,
                     "Conch at $serverUrl returned HTTP ${response.code}: " +
                         response.body.take(240).ifBlank { "empty response" },
                 )
@@ -494,15 +507,19 @@ class ShellClient(
                 encryptedBody,
                 headers,
                 callTimeoutMillis,
+                replaySafe = ConchNetwork.isReadOnly(path),
+                maxRetries = if (ConchNetwork.isReadOnly(path)) 0 else NetworkRetryPolicy.MAX_RETRIES,
             )
         } catch (e: Exception) {
+            NetworkRetryPolicy.throwIfCancelled(e)
             throw IllegalStateException(
                 describeConchRequestFailure(serverUrl, "$path request", e),
                 e,
             )
         }
         if (!response.isSuccessful) {
-            throw IllegalStateException(
+            throw NetworkHttpException(
+                response.code, response.retryAfter,
                 "Conch at $serverUrl returned HTTP ${response.code}: " +
                     response.body.take(240).ifBlank { "empty response" },
             )

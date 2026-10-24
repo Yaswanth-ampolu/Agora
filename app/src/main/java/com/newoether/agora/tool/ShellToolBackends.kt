@@ -92,24 +92,38 @@ internal class ConchBackend(override val device: ShellDeviceConfig) : Backend {
                 server = deviceName,
             )
         }
-        val prepared = client.prepareRequest(cmd, timeoutMs, workdir)
+        lateinit var prepared: ShellClient.PreparedRequest
+        val progress = com.newoether.agora.util.NetworkRequestProgress()
         val handle = try {
-            HttpClient.streamPost(
-                "${prepared.serverUrl}/execute",
-                prepared.body,
-                prepared.headers,
-                scope = HttpClient.boundStreamScope(),
-                callClient = com.newoether.agora.util.ConchNetwork.streamCalls,
-                maxLineBytes = com.newoether.agora.util.ConchNetwork.LINE_LIMIT,
-                maxErrorBytes = com.newoether.agora.util.ConchNetwork.CONTROL_LIMIT,
-            )
+            com.newoether.agora.util.NetworkRetryPolicy.retry(
+                canRetry = { failure ->
+                    !progress.started && com.newoether.agora.util.NetworkRetryPolicy.isBeforeSendFailure(failure)
+                },
+            ) {
+                prepared = client.prepareRequest(cmd, timeoutMs, workdir)
+                progress.started = false
+                HttpClient.streamPost(
+                    "${prepared.serverUrl}/execute",
+                    prepared.body,
+                    prepared.headers,
+                    scope = HttpClient.boundStreamScope(),
+                    callClient = okhttp3.Call.Factory { request ->
+                        com.newoether.agora.util.ConchNetwork.client.newCall(
+                            request.newBuilder()
+                                .tag(com.newoether.agora.util.NetworkRequestProgress::class.java, progress).build(),
+                        )
+                    },
+                    maxLineBytes = com.newoether.agora.util.ConchNetwork.LINE_LIMIT,
+                    maxErrorBytes = com.newoether.agora.util.ConchNetwork.CONTROL_LIMIT,
+                )
+            }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (e: Exception) {
             return jsonError(
                 "execute_shell_command",
                 com.newoether.agora.util.describeConchRequestFailure(
-                    prepared.serverUrl,
+                    url,
                     "/execute request",
                     e,
                 ),
@@ -118,6 +132,7 @@ internal class ConchBackend(override val device: ShellDeviceConfig) : Backend {
             )
         }
         if (handle.code !in 200..299) {
+            val statusCode = handle.code
             val detail = handle.errorBody
                 ?.take(240)
                 ?.ifBlank { "empty response" }
@@ -125,7 +140,7 @@ internal class ConchBackend(override val device: ShellDeviceConfig) : Backend {
             handle.close()
             return jsonError(
                 "execute_shell_command",
-                "Conch at ${prepared.serverUrl} returned HTTP ${handle.code}: $detail",
+                "Conch at ${prepared.serverUrl} returned HTTP $statusCode: $detail",
                 server = deviceName,
                 command = cmd,
             )

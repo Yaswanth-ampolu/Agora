@@ -56,7 +56,7 @@ class StreamTerminationTest {
                 producedContent = event.carriesModelOutput(),
                 streamError = GenerationError.Api("insufficient_quota", null, "The server response could not be read."),
             )
-            assertTrue(unreadableWithQuotaFields.isRetryable)
+            assertFalse(unreadableWithQuotaFields.isRetryable)
         }
         assertTrue(StreamEvent.TextChunk(" answer ").carriesModelOutput())
         assertTrue(StreamEvent.ThoughtChunk(" reasoning ").carriesModelOutput())
@@ -111,7 +111,7 @@ class StreamTerminationTest {
 
         val error = result.toError("Anthropic") as GenerationError.IncompleteStream
         assertTrue(error.toolCallInFlight)
-        assertFalse(result.isRetryable)
+        assertTrue(result.isRetryable)
     }
 
     @Test
@@ -128,8 +128,8 @@ class StreamTerminationTest {
         val error = result.toError("Anthropic") as GenerationError.IncompleteStream
         assertEquals("Anthropic", error.provider)
         assertTrue(error.toolCallInFlight)
-        // Content was already shown, so a replay would duplicate it.
-        assertFalse(result.isRetryable)
+        // Failed partial output is rolled back by the consumer before replay.
+        assertTrue(result.isRetryable)
     }
 
     @Test
@@ -172,12 +172,12 @@ class StreamTerminationTest {
     }
 
     @Test
-    fun inStreamErrorAfterContent_isSurfacedButNotRetried() {
+    fun inStreamErrorAfterContent_isRolledBackAndRetried() {
         val apiError = GenerationError.Api(code = null, type = "overloaded_error", message = "Overloaded")
         val result = termination(producedContent = true, streamError = apiError)
 
         assertEquals(apiError, result.toError("Anthropic"))
-        assertFalse(result.isRetryable)
+        assertTrue(result.isRetryable)
     }
 
     @Test
@@ -217,11 +217,10 @@ class StreamTerminationTest {
     }
 
     @Test
-    fun responseReadRetryOverridesOutputTokenCapAndPermanentFieldsWithoutDuplicatingReportedErrors() {
+    fun responseReadRetryReplacesPartialOutputWithoutDuplicatingReportedErrors() {
         listOf(
             GenerationError.SseParse("broken", "invalid JSON"),
-            GenerationError.Api("insufficient_quota", "authentication_error", "The server response could not be read."),
-            GenerationError.Network(403, "The server response could not be read."),
+            GenerationError.Network(0, "socket is closed"),
             GenerationError.Unknown(IllegalStateException("The server response could not be read.")),
         ).forEach { error ->
             listOf(false, true).forEach { produced ->
@@ -281,7 +280,7 @@ class StreamTerminationTest {
             assertTrue(exactReadFailure.asRetryableTransportError() is GenerationError.Network)
             assertTrue(exactReadFailure.asRetryableResponseBodyReadError() is GenerationError.Network)
         }
-        assertNull(java.net.UnknownHostException("host unavailable").asRetryableTransportError())
+        assertTrue(java.net.UnknownHostException("host unavailable").asRetryableTransportError() is GenerationError.Network)
     }
 
     @Test
@@ -321,26 +320,28 @@ class StreamTerminationTest {
             assertEquals(opening, body)
             val result = termination(producedContent = false, streamError = body)
             assertTrue(result.isRetryable)
-            assertFalse(result.copy(producedContent = true).isRetryable)
-            assertFalse(result.copy(stopReason = "max_tokens").isRetryable)
+            assertTrue(result.copy(producedContent = true).isRetryable)
+            assertTrue(result.copy(stopReason = "max_tokens").isRetryable)
             assertFalse(result.copy(alreadyReportedError = true).isRetryable)
         }
     }
 
     @Test
-    fun bodyReadClassificationPreservesDnsCancellationAndUnrelatedIoFailures() {
+    fun cancellationIsPropagatedAndUnrelatedIoIsNotRetried() {
+        assertNull(java.io.IOException("disk or protocol failure").asRetryableResponseBodyReadError())
         listOf(
-            java.io.IOException("disk or protocol failure"),
-            IllegalStateException("Unexpected end of stream"),
-            java.io.IOException("Unexpected end of stream", java.net.UnknownHostException("host")),
             java.io.IOException("Unexpected end of file", kotlinx.coroutines.CancellationException("stopped")),
-            java.io.IOException("The server response could not be read.", kotlinx.coroutines.CancellationException("stopped")),
-            kotlinx.coroutines.CancellationException("The server response could not be read."),
             kotlinx.coroutines.CancellationException("Unexpected end of stream"),
         ).forEach { failure ->
-            assertNull(failure.toString(), failure.asRetryableResponseBodyReadError())
-            assertNull(failure.toString(), failure.asRetryableTransportError())
+            org.junit.Assert.assertThrows(kotlinx.coroutines.CancellationException::class.java) {
+                failure.asRetryableResponseBodyReadError()
+            }
+            org.junit.Assert.assertThrows(kotlinx.coroutines.CancellationException::class.java) {
+                failure.asRetryableTransportError()
+            }
         }
+        assertTrue(java.io.IOException("read failed", java.net.UnknownHostException("host"))
+            .asRetryableResponseBodyReadError() is GenerationError.Network)
     }
 
     @Test
