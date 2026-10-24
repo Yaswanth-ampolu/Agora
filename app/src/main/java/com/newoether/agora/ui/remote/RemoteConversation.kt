@@ -247,7 +247,7 @@ internal fun RemoteConversation(
                 contextTokenBudget = state.runtime?.contextWindow ?: 0,
                 contextAvailable = state.runtime?.contextTokens != null && state.runtime?.contextWindow != null,
                 subtitle = stringResource(remoteConnectionStatusLabel(connectionStatus)),
-                subtitleLeading = { com.newoether.agora.ui.settings.McpStatusDot(connectionStatus) },
+                subtitleLeading = { RemoteStatusDot(connectionStatus) },
                 searchActive = interaction.searchActive, searchQuery = interaction.searchQuery,
                 searchMatchIndex = interaction.searchMatchIndex, searchMatchCount = interaction.searchMatches.size,
                 onSearchQueryChange = interaction::updateSearchQuery,
@@ -344,10 +344,7 @@ internal fun RemoteConversation(
             ChatComposerLayout(field, focus, scroll::setComposerInputFocused, expanded, spacer.isRunning,
                 onExpand = { expanded = true }, onCollapse = { expanded = false },
                 statusContent = {
-                    if (!state.canSend) Text(stringResource(R.string.remote_source_read_only),
-                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (state.historyBounded) Text(stringResource(remoteHistoryBoundaryLabel(state)),
-                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    RemoteNativeConfirmation(state.runtime?.settingsChange)
                     ComposerStatusColumn(state.queued, { it.id }) { QueuedMessageRow(text = it.text) }
                 },
                 attachmentContent = {
@@ -359,19 +356,25 @@ internal fun RemoteConversation(
                 },
                 controls = {
                     ComposerControlGroup {
-                        if (state.capabilities.uploads) RemoteAttachmentPicker(owner, active && !submitting, vm)
-                        if (state.capabilities.models) ComposerModelSelector(
-                            displayText = (state.models.firstOrNull { it.id == state.selectedModel }?.name
+                        // The plus and model controls never disappear for an unsupported source; their
+                        // menu rows are disabled instead, and a missing model reads as Unavailable.
+                        RemoteAttachmentPicker(owner, active, state.capabilities.uploads && !submitting, vm)
+                        val modelChoice = state.capabilities.models && state.canChooseModel &&
+                            !submitting && !stopping && !state.controlling
+                        ComposerModelSelector(
+                            displayText = (state.models.takeIf { state.capabilities.models }
+                                ?.firstOrNull { it.id == state.selectedModel }?.name
                                 ?: state.selectedModel)?.replace('-', ' ') ?: stringResource(
-                                    if (state.modelsLoading || state.loading) R.string.loading_label else R.string.remote_model_unavailable),
+                                    if (state.capabilities.models && (state.modelsLoading || state.loading)) R.string.loading_label
+                                    else R.string.remote_model_unavailable),
                             isModelValid = state.selectedModel != null, expanded = activeMenu == "model",
-                            enabled = active && state.canChooseModel && !submitting && !stopping && !state.controlling,
+                            enabled = active,
                             onClick = {
                                 val now = System.currentTimeMillis()
                                 if (activeMenu == "model") activeMenu = null
                                 else if (now - lastModelDismissTime > 200) {
                                     activeMenu = "model"
-                                    vm.refreshModels()
+                                    if (state.capabilities.models) vm.refreshModels()
                                 }
                             },
                             onDismissRequest = {
@@ -382,7 +385,11 @@ internal fun RemoteConversation(
                             },
                             menuContent = {
                                 val sortedModels = remember(state.models) { state.models.sortedBy { it.id.lowercase() } }
-                                if (sortedModels.isEmpty()) AgoraDropdownMenuItem(
+                                if (!state.capabilities.models) AgoraDropdownMenuItem(
+                                    text = { Text(stringResource(R.string.remote_model_unavailable)) },
+                                    enabled = false,
+                                    onClick = {},
+                                ) else if (sortedModels.isEmpty()) AgoraDropdownMenuItem(
                                     text = { Text(stringResource(if (state.modelsLoading) R.string.loading_label else R.string.retry)) },
                                     enabled = !state.modelsLoading,
                                     onClick = vm::refreshModels,
@@ -391,6 +398,7 @@ internal fun RemoteConversation(
                                     ComposerModelMenuItem(
                                         displayText = model.name.replace('-', ' '),
                                         selected = model.id == state.selectedModel,
+                                        enabled = modelChoice,
                                         onClick = {
                                             haptics.selection()
                                             vm.setModel(model.id)
@@ -501,6 +509,7 @@ internal fun RemoteConversation(
                     }
                     val showStop = running && !stopping && field.text.isBlank() && attachments.isEmpty()
                     ComposerSendButton(isActionable = active && !stopping && !state.controlling && !state.controlPending && (showStop || !state.settingsPending) && !submitting &&
+                        !(attempt?.delivery == RemoteDelivery.UNKNOWN && attempt.receiptKind == "submitted_observed" && !showStop) &&
                         (if (showStop) state.canStop else state.canSend && (field.text.isNotBlank() || attachments.isNotEmpty())),
                         isBusy = submitting || stopping, showStop = showStop,
                         onBusyShown = { shownBusyAttempt = attempt?.clientId }) {

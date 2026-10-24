@@ -234,7 +234,7 @@ private fun ChatMessage.mayHoldProviderIds(): Boolean {
     return ids(text) || ids(thoughts) || ids(thoughtTitle) || ids(retryText) ||
         toolCall?.let { call ->
             ids(call.toolName) || ids(call.arguments) || ids(call.result) || ids(call.displayName) ||
-                ids(call.resultText) || ids(call.structuredResult)
+                ids(call.target) || ids(call.resultText) || ids(call.structuredResult)
         } == true ||
         segments?.any { segment ->
             segment.type != "citation" && (ids(segment.content) || ids(segment.toolName) ||
@@ -266,6 +266,7 @@ private fun ToolCallData.forDisplay(
     arguments = replaceCustomProviderIdsForDisplay(arguments, customProviders),
     result = replaceCustomProviderIdsForDisplay(result, customProviders),
     displayName = displayName.replaceCustomProviderIdsForDisplayOrNull(customProviders),
+    target = target.replaceCustomProviderIdsForDisplayOrNull(customProviders),
     resultText = resultText.replaceCustomProviderIdsForDisplayOrNull(customProviders),
     structuredResult = structuredResult.replaceCustomProviderIdsForDisplayOrNull(customProviders),
 )

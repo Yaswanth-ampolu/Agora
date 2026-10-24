@@ -110,11 +110,19 @@ internal fun ToolDetailContent(
     val body = presentation.body
     if (body is ToolDetailBody.Search) {
         WebSearchResult(body)
+        presentation.supplemental.forEach { value ->
+            Spacer(Modifier.height(12.dp))
+            JsonOrPlainView(value)
+        }
         return
     }
     if (presentation.kind == ToolKind.WEB_SEARCH && body is ToolDetailBody.Muted) {
         Column(modifier = Modifier.padding(horizontal = 8.dp)) {
             ToolMutedContent(body.text)
+            presentation.supplemental.forEach { value ->
+                Spacer(Modifier.height(12.dp))
+                JsonOrPlainView(value)
+            }
         }
         return
     }
@@ -140,6 +148,10 @@ internal fun ToolDetailContent(
             is ToolDetailBody.FileContent -> FileReadResult(body)
             is ToolDetailBody.Edit -> FileEditResult(body)
             is ToolDetailBody.Search -> Unit
+        }
+        presentation.supplemental.forEach { value ->
+            Spacer(Modifier.height(12.dp))
+            JsonOrPlainView(value)
         }
     }
 }

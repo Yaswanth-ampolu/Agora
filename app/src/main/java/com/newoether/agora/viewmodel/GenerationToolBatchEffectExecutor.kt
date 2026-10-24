@@ -136,7 +136,7 @@ internal class GenerationToolOverlay(
         if (existingIndex != null) {
             val existing = segments[existingIndex]
             val resolvedName = name.ifBlank { existing.toolName.orEmpty() }
-            val metadata = presentation.presentationMetadata(resolvedName)
+            val metadata = presentation.presentationMetadata(resolvedName, arguments)
             segments[existingIndex] = existing.copy(
                 toolName = resolvedName.ifBlank { existing.toolName },
                 toolArgs = arguments,
@@ -153,7 +153,7 @@ internal class GenerationToolOverlay(
         }
 
         val index = segments.size
-        val metadata = presentation.presentationMetadata(name)
+        val metadata = presentation.presentationMetadata(name, arguments)
         segments += MessageSegment(
             type = "tool",
             toolName = name.ifBlank { null },
@@ -196,7 +196,7 @@ internal class GenerationToolOverlay(
             "Missing live segment for tool call ${call.streamKey}"
         }
         val current = segments[index]
-        val metadata = presentation.presentationMetadata(call.name)
+        val metadata = presentation.presentationMetadata(call.name, call.arguments)
         segments[index] = current.copy(
             toolName = call.name,
             toolArgs = call.arguments,
@@ -258,7 +258,10 @@ internal class GenerationToolOverlay(
                     Constants.MAX_TOOL_RESULT_LENGTH,
                 ),
             )
-            is ToolExecutionEvent.TargetResolved -> current.copy(toolTarget = event.target)
+            is ToolExecutionEvent.TargetResolved -> current.copy(
+                toolTarget = event.target,
+                toolDisplayName = event.displayName ?: current.toolDisplayName,
+            )
             is ToolExecutionEvent.Progress -> current.copy(toolState = ToolExecutionStates.RUNNING)
             is ToolExecutionEvent.Completed -> current
         }
@@ -294,6 +297,7 @@ internal class GenerationToolOverlay(
                 toolCallId = call.id,
                 resultImages = result.images,
                 displayName = completed.toolDisplayName,
+                target = completed.toolTarget,
                 resultText = displayText,
                 structuredResult = structuredResult,
                 responseOutputItems = completed.responseOutputItems,

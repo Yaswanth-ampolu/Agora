@@ -103,7 +103,7 @@ internal fun mcpToolDisplayName(
 internal fun toolHeaderIcon(kind: ToolKind): ImageVector = when (kind) {
     ToolKind.TODO_READ, ToolKind.TODO_UPDATE -> Icons.Default.Checklist
     ToolKind.SUBAGENT_SPAWN, ToolKind.SUBAGENT_SEND, ToolKind.SUBAGENT_WAIT,
-    ToolKind.SUBAGENT_LIST, ToolKind.SUBAGENT_STOP -> Icons.Default.AccountTree
+    ToolKind.SUBAGENT_LIST, ToolKind.SUBAGENT_STOP, ToolKind.SUBAGENT_DELETE -> Icons.Default.AccountTree
     else -> Icons.Default.Build
 }
 
@@ -165,6 +165,9 @@ private fun Resources.toolBaseDisplayName(
     ToolKind.SUBAGENT_WAIT -> getString(R.string.tool_wait_agents)
     ToolKind.SUBAGENT_LIST -> getString(R.string.tool_list_agents)
     ToolKind.SUBAGENT_STOP -> getString(R.string.tool_stop_agent)
+    ToolKind.SUBAGENT_DELETE -> getString(R.string.tool_delete_agent)
+    ToolKind.MCP_LIST -> getString(R.string.tool_list_mcp_servers)
+    ToolKind.MCP_SEARCH -> getString(R.string.tool_search_mcp_tools)
     ToolKind.MCP -> "MCP"
     ToolKind.UNKNOWN -> if (toolName == "code_execution") {
         getString(R.string.code_execution)
@@ -348,6 +351,13 @@ private fun Resources.runningSummary(
     ToolKind.SUBAGENT_WAIT -> getString(R.string.tool_waiting_agents)
     ToolKind.SUBAGENT_LIST -> getString(R.string.tool_listing_agents)
     ToolKind.SUBAGENT_STOP -> getString(R.string.tool_stopping_agent)
+    ToolKind.SUBAGENT_DELETE -> getString(R.string.tool_deleting_agent)
+    ToolKind.MCP_LIST -> getString(R.string.tool_listing_mcp_servers)
+    ToolKind.MCP_SEARCH -> optionalSubjectSummary(
+        subject,
+        R.string.tool_searching_mcp_tools_for,
+        R.string.tool_searching_mcp_tools,
+    )
     ToolKind.MCP,
     ToolKind.UNKNOWN -> getString(R.string.tool_calling_ellipsis)
 }
@@ -490,6 +500,8 @@ private fun Resources.emptySummary(
         subject, R.string.tool_read_file_empty, R.string.tool_read_content_empty,
     )
     ToolKind.CONVERSATION_READ -> getString(R.string.tool_read_conversation_empty)
+    ToolKind.MCP_LIST -> getString(R.string.tool_no_mcp_servers_returned)
+    ToolKind.MCP_SEARCH -> getString(R.string.tool_no_mcp_tools)
     ToolKind.MEMORY_LIST -> getString(R.string.tool_no_memories)
     ToolKind.SKILL_LIST -> getString(R.string.tool_no_skills)
     ToolKind.WEB_SEARCH -> optionalSubjectSummary(
@@ -682,6 +694,13 @@ private fun Resources.completedSummary(
     ToolKind.SUBAGENT_WAIT -> getString(R.string.tool_waited_agents)
     ToolKind.SUBAGENT_LIST -> getString(R.string.tool_listed_agents)
     ToolKind.SUBAGENT_STOP -> getString(R.string.tool_stopped_agent)
+    ToolKind.SUBAGENT_DELETE -> getString(R.string.tool_deleted_agent)
+    ToolKind.MCP_LIST -> presentation.count?.let {
+        getQuantityString(R.plurals.tool_listed_mcp_servers, it, it)
+    } ?: getString(R.string.tool_listed_mcp_servers_default)
+    ToolKind.MCP_SEARCH -> presentation.count?.let {
+        getQuantityString(R.plurals.tool_found_mcp_tools, it, it)
+    } ?: getString(R.string.tool_searched_mcp_tools)
     ToolKind.MCP,
     ToolKind.UNKNOWN -> getString(R.string.tool_done)
 }
@@ -709,7 +728,7 @@ private fun Resources.failedSummary(
                 ?: getString(R.string.tool_delete_failed_default)
         ToolKind.FILE_WRITE -> target?.let { getString(R.string.tool_failed_to_write, it) }
             ?: getString(R.string.tool_write_failed_default)
-        ToolKind.WEB_SEARCH, ToolKind.CONVERSATION_SEARCH, ToolKind.FILE_GREP ->
+        ToolKind.WEB_SEARCH, ToolKind.MCP_SEARCH, ToolKind.CONVERSATION_SEARCH, ToolKind.FILE_GREP ->
             target?.let { getString(R.string.tool_failed_to_search, it) }
                 ?: getString(R.string.tool_search_failed)
         ToolKind.WEB_FETCH -> target?.let { getString(R.string.tool_failed_to_fetch, it) }
@@ -725,6 +744,7 @@ private fun Resources.failedSummary(
         ToolKind.SHELL_JOB_GET, ToolKind.SHELL_JOB_WAIT ->
             getString(R.string.tool_shell_job_read_failed)
         ToolKind.SHELL_JOB_STOP -> getString(R.string.tool_shell_job_stop_failed)
+        ToolKind.MCP_LIST -> getString(R.string.tool_list_mcp_servers_failed)
         ToolKind.MEMORY_LIST, ToolKind.SKILL_LIST, ToolKind.CONVERSATION_LIST,
         ToolKind.SHELL_LIST, ToolKind.SHELL_JOB_LIST, ToolKind.TASK_LIST ->
             getString(R.string.tool_list_failed_default)
@@ -735,7 +755,7 @@ private fun Resources.failedSummary(
         ToolKind.TODO_UPDATE -> getString(R.string.tool_update_failed_default)
         ToolKind.SUBAGENT_SPAWN -> getString(R.string.tool_create_failed_default)
         ToolKind.SUBAGENT_LIST -> getString(R.string.tool_list_failed_default)
-        ToolKind.SUBAGENT_SEND, ToolKind.SUBAGENT_WAIT, ToolKind.SUBAGENT_STOP,
+        ToolKind.SUBAGENT_SEND, ToolKind.SUBAGENT_WAIT, ToolKind.SUBAGENT_STOP, ToolKind.SUBAGENT_DELETE,
         ToolKind.MCP, ToolKind.UNKNOWN -> reason ?: getString(R.string.tool_call_failed)
     }
 }

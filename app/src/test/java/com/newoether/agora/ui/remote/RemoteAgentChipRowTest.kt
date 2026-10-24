@@ -82,7 +82,7 @@ class RemoteAgentChipRowTest {
         compose.onNodeWithText("Claude Code").assertDoesNotExist()
     }
 
-    @Test fun errorAndIdleRetainDistinctSharedDotColorsWithReducedMotionAndNoAction() {
+    @Test fun errorRendersTheNeutralIdleDotWithReducedMotionAndNoAction() {
         var status by mutableStateOf(RemoteDeviceStatus.ERROR)
         lateinit var drawingView: View
         var expected = Color.Unspecified
@@ -92,8 +92,7 @@ class RemoteAgentChipRowTest {
                 MaterialTheme {
                     drawingView = LocalView.current
                     val statusColor = when (status) {
-                        RemoteDeviceStatus.ERROR -> MaterialTheme.colorScheme.error
-                        RemoteDeviceStatus.IDLE -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        RemoteDeviceStatus.ERROR, RemoteDeviceStatus.IDLE -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                         RemoteDeviceStatus.CONNECTING -> MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)
                         RemoteDeviceStatus.CONNECTED -> MaterialTheme.colorScheme.primary
                     }
@@ -123,7 +122,6 @@ class RemoteAgentChipRowTest {
         }
         compose.onNodeWithContentDescription("Codex Desktop, Offline").assertHasNoClickAction()
         val errorPixel = dotPixel()
-        assertEquals(expected.toArgb(), errorPixel)
         compose.runOnIdle { status = RemoteDeviceStatus.IDLE }
         compose.onNodeWithContentDescription("Codex Desktop, Offline").assertHasNoClickAction()
         val idlePixel = dotPixel()
@@ -134,7 +132,7 @@ class RemoteAgentChipRowTest {
             val actualChannel = (idlePixel ushr shift) and 0xff
             assertEquals("Idle dot channel $shift", expectedChannel.toDouble(), actualChannel.toDouble(), 1.0)
         }
-        assertTrue("Offline idle and connection failure must remain visibly distinct", errorPixel != idlePixel)
+        assertEquals("Remote dots never render red; error uses the idle gray", idlePixel, errorPixel)
         compose.runOnIdle { status = RemoteDeviceStatus.CONNECTED }
         compose.onNodeWithContentDescription("Codex Desktop, Online").assertHasNoClickAction()
         assertEquals(expected.toArgb(), dotPixel())

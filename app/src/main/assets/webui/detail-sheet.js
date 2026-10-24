@@ -227,6 +227,9 @@ function ToolDetail({ item, conversationId, messageId }) {
         image=${image} detail=${detail} onClick=${() => setPreview(index)} />`)}
     </div>`}
     <${ToolBody} body=${detail.body} />
+    ${(detail.supplemental || []).map((document, index) => html`<div class="tool-arguments" key=${index}>
+      <${ToolDocument} document=${document} />
+    </div>`)}
     ${preview != null && html`<${ToolMediaPreview} detail=${detail} urls=${urls} initialIndex=${preview} onClose=${() => setPreview(null)} />`}
   </div>`;
 }

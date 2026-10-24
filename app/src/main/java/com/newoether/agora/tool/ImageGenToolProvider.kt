@@ -111,6 +111,7 @@ class ImageGenToolProvider(private val app: Application) : ToolProvider {
                     mapOf("Authorization" to "Bearer $apiKey"),
                     callTimeoutMillis = Constants.IMAGE_GENERATION_TIMEOUT_MS,
                     readTimeoutMillis = Constants.IMAGE_GENERATION_TIMEOUT_MS,
+                    replaySafe = false,
                 ) ?: return@withContext err("no_response", null) to null
 
                 val json = Json.decodeFromString<Map<String, kotlinx.serialization.json.JsonElement>>(response)

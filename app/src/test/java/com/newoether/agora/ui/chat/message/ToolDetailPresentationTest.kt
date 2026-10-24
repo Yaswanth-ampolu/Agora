@@ -261,6 +261,18 @@ class ToolDetailPresentationTest {
         compose.onNodeWithText("command output").assertDoesNotExist()
     }
 
+    @Test fun subagentConcurrencyErrorUsesExistingFailedToolPresentation() {
+        val error = "Error: Subagent concurrency limit reached (4/4 running for this conversation). " +
+            "Wait for a running subagent to finish (wait_agents) before starting another."
+        val rejected = segment("spawn_agent", error, ToolExecutionStates.FAILED)
+        val failed = body(rejected) as ToolDetailBody.Failed
+        assertTrue(failed.text.contains("4/4"))
+        assertTrue(failed.text.contains("wait_agents"))
+        compose.setContent { MaterialTheme { ToolDetailContent(rejected) { _, _ -> } } }
+        compose.onNodeWithText(failed.text).assertExists()
+        compose.onNodeWithText("started").assertDoesNotExist()
+    }
+
     @Test @Config(qualifiers = "zh") fun composeFailureAndStopKeepLocalizedTerminalTextOnly() {
         val current = mutableStateOf(segment("mcp_test", "", ToolExecutionStates.FAILED))
         compose.setContent { MaterialTheme { ToolDetailContent(current.value) { _, _ -> } } }

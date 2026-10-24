@@ -31,7 +31,7 @@ class GenerationToolBatchEffectExecutorTest {
     fun `malformed citation segments fail closed during overlay restore and append`() {
         val overlay = GenerationToolOverlay(
             presentation = object : GenerationToolPresentationSource {
-                override fun presentationMetadata(name: String) = null
+                override fun presentationMetadata(name: String, arguments: String?) = null
             },
             providerName = "provider",
         )
@@ -48,7 +48,7 @@ class GenerationToolBatchEffectExecutorTest {
     fun `late thought signature updates the completed thought without adding a segment`() {
         val overlay = GenerationToolOverlay(
             presentation = object : GenerationToolPresentationSource {
-                override fun presentationMetadata(name: String) = null
+                override fun presentationMetadata(name: String, arguments: String?) = null
             },
             providerName = "provider",
         )
@@ -72,7 +72,7 @@ class GenerationToolBatchEffectExecutorTest {
     fun `overlay uniquely owns stream indices metadata and terminal presentation`() {
         val overlay = GenerationToolOverlay(
             presentation = object : GenerationToolPresentationSource {
-                override fun presentationMetadata(name: String) =
+                override fun presentationMetadata(name: String, arguments: String?) =
                     ToolPresentationMetadata(displayName = "Display $name", target = "initial")
             },
             providerName = "provider",
@@ -106,10 +106,57 @@ class GenerationToolBatchEffectExecutorTest {
     }
 
     @Test
+    fun `router arguments reach all overlay metadata boundaries and exact execution title persists`() {
+        val observed = mutableListOf<Pair<String, String?>>()
+        val source = object : GenerationToolPresentationSource {
+            override fun presentationMetadata(name: String, arguments: String?): ToolPresentationMetadata? {
+                observed += name to arguments
+                return null
+            }
+        }
+        val overlay = GenerationToolOverlay(source, "provider")
+        val prefix = """{"arguments":{"content":""""
+        val full = prefix + "x".repeat(10_000) + """"},"tool_id":"mcp_server_read_ab1234"}"""
+        val request = call(arguments = full).copy(name = "mcp_call_tool")
+        overlay.upsert("stream", "call", "mcp_call_tool", prefix, null)
+        overlay.upsert("stream", "call", "", full, null)
+        overlay.start(request)
+        assertEquals(listOf("mcp_call_tool" to prefix, "mcp_call_tool" to full,
+            "mcp_call_tool" to full), observed)
+        overlay.applyProgress("call", ToolExecutionEvent.TargetResolved("server", "filesystem/read_file"))
+        overlay.applyProgress("call", ToolExecutionEvent.TargetResolved("exact server"))
+        val completed = overlay.complete(request, ToolExecutionResult("done"))
+        assertEquals("filesystem/read_file", completed.segment.toolDisplayName)
+        assertEquals("filesystem/read_file", completed.data.displayName)
+        assertEquals("exact server", completed.data.target)
+        assertEquals("mcp_call_tool", completed.data.toolName)
+        assertEquals(full, completed.data.arguments)
+    }
+
+    @Test
+    fun `executor forwards raw arguments to provider metadata`() {
+        val observed = mutableListOf<Pair<String, String?>>()
+        val provider = object : ToolProvider {
+            override fun definitions(ctx: GenerationContext): List<ToolDefinition> = emptyList()
+            override fun handles(name: String) = true
+            override suspend fun execute(name: String, arguments: String, ctx: GenerationContext) = "done"
+            override fun presentationMetadata(name: String, arguments: String?): ToolPresentationMetadata? {
+                observed += name to arguments
+                return ToolPresentationMetadata("remote", "server")
+            }
+        }
+        val executor = GenerationToolExecutor.forTest(listOf(provider))
+        val arguments = """{"tool_id":"complete","arguments":{}}"""
+        assertEquals(ToolPresentationMetadata("remote", "server"),
+            executor.presentationMetadata("mcp_call_tool", arguments))
+        assertEquals(listOf("mcp_call_tool" to arguments), observed)
+    }
+
+    @Test
     fun `citation overlay preserves first source order and merges repeated terminal updates`() {
         val overlay = GenerationToolOverlay(
             presentation = object : GenerationToolPresentationSource {
-                override fun presentationMetadata(name: String) = null
+                override fun presentationMetadata(name: String, arguments: String?) = null
             },
             providerName = "provider",
         )
@@ -157,7 +204,7 @@ class GenerationToolBatchEffectExecutorTest {
     fun `provider hosted tool lifecycle becomes one terminal display segment`() {
         val overlay = GenerationToolOverlay(
             presentation = object : GenerationToolPresentationSource {
-                override fun presentationMetadata(name: String) =
+                override fun presentationMetadata(name: String, arguments: String?) =
                     ToolPresentationMetadata(displayName = "OpenAI Search")
             },
             providerName = "OpenAI",
@@ -476,7 +523,7 @@ class GenerationToolBatchEffectExecutorTest {
 
         override fun handles(name: String): Boolean = name == "tool"
 
-        override fun presentationMetadata(name: String) = ToolPresentationMetadata("Display")
+        override fun presentationMetadata(name: String, arguments: String?) = ToolPresentationMetadata("Display")
 
         override suspend fun execute(name: String, arguments: String, ctx: GenerationContext): String =
             error("Streaming adapter expected")

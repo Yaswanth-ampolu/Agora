@@ -294,7 +294,9 @@ These presentation changes preserve the existing query, result, cancellation and
 Opening an existing conversation binds covered layout settlement to that destination's scroll
 coordinator. Selection publication and switching readiness may arrive in either order; the previous
 destination must not begin waiting on its own hydration registry for the incoming page. Completion
-still requires the current destination's loaded conversation, context projection and stable layout.
+still requires the current destination's loaded conversation and stable layout. Context projection
+readiness has an eight-second wait bound; reaching it continues layout settlement while accounting
+runs on, with rollout disabled until a matching successful projection completes.
 Send consumes its scroll request only after the target turn has a measured message index. The final
 absolute-bottom sentinel is excluded from this range, so a new turn cannot match the old sentinel
 before the list has measured the insertion.
@@ -305,11 +307,20 @@ Conversation search exposes a separate in-flight state from the moment a nonblan
 
 The drawer's first-list state is not a second conversation authority or a new search architecture; Room remains the durable source and the existing search methods remain authoritative.
 
+The Android drawer's ordinary conversation row shows its existing generation indicator while that
+conversation generates or any linked Subagent is running. The parent remains active until both its
+own generation and all child activity end, including when only one of several children finishes.
+The existing indicator appearance, unread priority and child-row visibility remain unchanged.
+`ChatViewModel.generatingConversationIds` consumes the repository's presentation-only union of
+foreground generation, automation and registered delegation Jobs, including each active child's
+parent ID. Parent membership is observed in one narrow Room query restricted to those active IDs;
+idle startup performs no child/Run/message scan, and no per-row query or polling is introduced.
+
 Drawer long press offers a push-pin `Pin` action, replaced by `Unpin` for a pinned conversation, then
 `Generate Title`, `Rename` and `Delete` in that order. Active generation alone never disables
 these metadata/lifecycle actions. Switching/loading and actual Send-submission exclusion remain
-separate guards. Manual title generation freezes the selected branch's currently available USER
-and ASSISTANT content, including a matching live partial answer; either role may be absent. Empty
+separate guards. Manual title generation uses the selected branch's first USER message under the
+shared title-input contract in message-generation.md, including while a reply is streaming. Empty
 input makes no Provider call. Repeated requests and late results must not overwrite a newer rename,
 newer title decision or deleted conversation, nor interrupt ordinary generation. Delete retains the
 existing confirmation and waits for canonical generation/Loop/owned-child cleanup before durable deletion.
@@ -1709,16 +1720,26 @@ clear/disposal. Compact and automatic continuation must not transiently report c
 same admitted Subagent task is still working; status follows its canonical work lifecycle, not animation.
 Settings > Subagents offers Capsule display: Individual or Grouped (default), applied immediately
 on native and WebUI. This presentation preference does not change delegation admission or family data.
-Individual retains one capsule per child. Grouped hides at zero, keeps the existing direct child capsule
-at one, and uses one localized count capsule (`2 Subagents`, etc.) for two or more. Any working child
-shows the existing progress indicator; when none works, the aggregate uses AccountTree regardless of
-individual terminal states. A selected child activates the aggregate; the parent does not.
+Individual retains one capsule per child. Grouped hides at zero and keeps direct child navigation
+at one; two or more children share a count capsule and open the existing child sheet.
+The native grouped capsule displays localized `X Running` while any child has the canonical
+`running` status, using only that running count; otherwise it displays localized `X Subagents`
+using the total child count, including `1 Subagent` at one. Its plurals cover every supported locale.
+Running consumes the existing repository status projection: a durable Run with `activeSlot = 1`
+or a registered Subagent worker is `running`, including a worker waiting for generation admission
+or crossing Compact/ordinary handoffs. Queued messages alone do not count. The existing progress
+indicator follows that same status without changing its crossfade.
+When none works, the aggregate uses AccountTree regardless of individual terminal states.
+A selected child activates the aggregate; the parent does not.
 The grouped entry keeps one stable family key across single/count changes. Its title/count and status
 crossfade over250ms, including adding/removing a child, single-to-count transitions and interrupted
 updates, without replaying entrance or briefly losing the surface. Selection colors retain the same
-250ms transition. Natural width changes use the existing shared-row geometry owner; no second width,
-scroll or lifecycle authority is introduced. Reduced Motion retains opacity fades and snaps spatial
-changes. Individual title changes also crossfade in place with the existing status slot.
+250ms transition. Native capsule title/count changes reuse the title capsule's 400ms identity clip:
+content keeps stable constraints on a canvas capped at 240dp while the rounded visible edge and
+occupied width move together. Interrupted titles retarget from the current edge. The shared row
+follows that visible width directly, retaining its existing scroll, placement and lifecycle owners
+without adding a second width animation. Reduced Motion retains the 250ms opacity fades and snaps
+spatial changes. Individual title changes use the same clip and crossfade with the fixed status slot.
 At two or more, tapping the grouped capsule opens the shared SmoothBottomSheet with the existing
 Todo-style header and scrollable32dp bottom/navigation inset. Rows show each child's name and status
 in the same creation order; the current child has selected colors/semantics. Both surfaces use

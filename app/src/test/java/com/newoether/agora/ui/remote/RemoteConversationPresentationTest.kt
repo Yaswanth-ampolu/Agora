@@ -64,6 +64,22 @@ class RemoteConversationPresentationTest {
         }
     }
 
+    @Test fun inputReceiptStatesNeverRenderAboveTheComposer() {
+        val owner = requireNotNull(state.owner)
+        state = state.copy(attempts = mapOf(owner to RemoteAttempt("receipt", "Unsent draft",
+            RemoteDelivery.SUBMITTING, receiptKind = "submitted_observed")))
+        show()
+        for (delivery in RemoteDelivery.entries) {
+            compose.runOnIdle {
+                state = state.copy(attempts = mapOf(owner to state.attempts.getValue(owner).copy(delivery = delivery)))
+            }
+            compose.onAllNodes(hasText("non-exact", substring = true, ignoreCase = true)).assertCountEquals(0)
+            compose.onAllNodes(hasText("Matching native input", substring = true)).assertCountEquals(0)
+            compose.onNode(hasSetTextAction()).assertTextContains("Unsent draft")
+        }
+        verify(exactly = 0) { vm.send() }
+    }
+
     @Test fun detailsRemainsVisibleDuringLoadingWithBothUnavailableRowsDisabled() {
         state = state.copy(models = emptyList(), modelsLoading = true, loading = true)
         show()
@@ -85,6 +101,24 @@ class RemoteConversationPresentationTest {
         compose.onNodeWithText(text(R.string.thinking)).assertExists().assertIsNotEnabled()
         compose.onNodeWithText(text(R.string.openai_service_tier_title)).assertExists().assertIsNotEnabled()
     }
+    @Test fun nativeModelRemainsVisibleWithoutCatalogOrMutationSupport() {
+        val caps = RemoteCapabilities(history = true, live = true)
+        val source = RemoteAdapter("claude-desktop", "claude", "desktop", "connected",
+            nativeScopeId = "scope", capabilities = caps)
+        state = state.copy(
+            devices = state.devices.map { it.copy(multiAdapter = true, adapters = listOf(source)) },
+            adapterSelections = mapOf("device" to source.id),
+            session = RemoteSession("native", "", "", 0,
+                access = RemoteSessionAccess("scope", "canonical", "binding", caps)),
+            draftSessionId = null, runtime = RemoteRuntime("idle", model = "actual-native-model"),
+        )
+        show()
+        compose.onNodeWithText("actual native model").assertIsDisplayed().performClick()
+        compose.onNodeWithText(text(R.string.remote_model_unavailable)).assertExists().assertIsNotEnabled()
+        verify(exactly = 0) { vm.setModel(any()) }
+        verify(exactly = 0) { vm.refreshModels() }
+    }
+
     @Test fun supportedThinkingAndUnsupportedTierAreDisabledIndependently() {
         state = state.copy(models = listOf(RemoteModel("model", "Model", true, listOf("low", "high"), "low")))
         show()

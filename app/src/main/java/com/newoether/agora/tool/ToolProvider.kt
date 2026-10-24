@@ -14,7 +14,7 @@ sealed interface ToolExecutionEvent {
     data class OutputSnapshot(val text: String) : ToolExecutionEvent
 
     /** The concrete device selected after resolving optional tool arguments. */
-    data class TargetResolved(val target: String) : ToolExecutionEvent
+    data class TargetResolved(val target: String, val displayName: String? = null) : ToolExecutionEvent
 
     /** A low-volume lifecycle update. It is not command output. */
     data class Progress(val message: String) : ToolExecutionEvent
@@ -88,8 +88,9 @@ interface ToolProvider {
     fun handles(name: String): Boolean
 
     /**
-     * Resolve stable UI metadata as soon as a streamed tool name is complete. The default keeps
-     * built-in tools on their localized presentation path.
+     * Resolve stable UI metadata from the protocol name and optional raw arguments. Streaming
+     * callers may supply an unfinished JSON prefix; providers must bound that inspection.
+     * Built-in tools keep their localized presentation path by default.
      */
-    fun presentationMetadata(name: String): ToolPresentationMetadata? = null
+    fun presentationMetadata(name: String, arguments: String? = null): ToolPresentationMetadata? = null
 }

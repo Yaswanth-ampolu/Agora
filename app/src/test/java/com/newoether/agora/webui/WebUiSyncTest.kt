@@ -89,6 +89,7 @@ class WebUiSyncTest {
     internal val conversations = mockk<ConversationRepository> {
         every { chatDao } returns todoDao
         every { subagentJobs } returns MutableStateFlow(emptyMap())
+        every { subagentGenerationIds } returns MutableStateFlow(emptySet())
         every { observeDrawerConversations(any()) } answers {
             val limit = firstArg<Int>()
             list.map { rows -> rows.take(limit).map { DrawerConversationRow(it.id, it.title, it.hasUnreadGeneration, it.isPinned) } }

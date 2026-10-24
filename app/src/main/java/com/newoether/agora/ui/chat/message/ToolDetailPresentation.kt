@@ -21,6 +21,8 @@ internal data class ToolDetailPresentation(
     val body: ToolDetailBody,
     /** Long string argument pulled out of [arguments] and shown as code. */
     val codeArgument: ToolDetailCodeArgument? = null,
+    /** Native result metadata not consumed by a specialized body remains visible as JSON. */
+    val supplemental: List<String> = emptyList(),
 )
 
 /** [rows] is set when the value is file content and gets a line-number gutter. */
@@ -66,6 +68,7 @@ internal data class ToolDetailSearchResult(
 )
 
 internal fun Resources.toolDetailPresentation(segment: MessageSegment): ToolDetailPresentation {
+    if (segment.remoteToolSource != null) return remoteToolDetailPresentation(segment)
     val presentation = ToolPresentationResolver.resolve(segment)
     val body = toolDetailBody(presentation)
     val codeSource = codeArgumentSource(presentation)

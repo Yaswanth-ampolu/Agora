@@ -391,6 +391,10 @@ Slash-qualified MCP/tool display titles preserve `/` and capitalize the followin
 including Remote names such as `Blender Mcp/execute Code` -> `Blender Mcp/Execute Code`.
 Use the shared title formatter for resolved MCP names and generic Remote tool labels; preserve
 existing interior casing, routing identity, arguments, and other separator formatting.
+MCP router metadata follows tool-presentation.md: inspect at most 4096 argument characters per
+stream update and resolve only complete root IDs. Large reverse-order payloads acquire the exact
+remote title and server target through the ordinary execution event. Persisted metadata supplies
+history display without querying the live registry; protocol tool names and arguments remain intact.
 
 Failed and stopped tool-detail content inside the shared Thinking/Tool bottom-sheet path reuses the
 same neutral gray body-text terminal presentation as ordinary message content. Failed text remains

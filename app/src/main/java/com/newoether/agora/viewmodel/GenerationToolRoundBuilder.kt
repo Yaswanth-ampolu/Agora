@@ -122,6 +122,7 @@ internal class GenerationToolRoundBuilder(
         signatureProvider = providerName.takeIf { signature != null },
         toolCallId = toolCallId,
         toolDisplayName = displayName,
+        toolTarget = target,
         toolResultText = resultText,
         toolStructuredResult = structuredResult,
         toolImages = resultImages,

@@ -170,8 +170,9 @@ internal fun RowScope.ComposerModelSelector(
 }
 
 @Composable
-internal fun ComposerModelMenuItem(displayText: String, selected: Boolean, onClick: () -> Unit) {
+internal fun ComposerModelMenuItem(displayText: String, selected: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
     AgoraDropdownMenuItem(
+        enabled = enabled,
         text = { Text(displayText) },
         leadingIcon = {
             if (selected) Icon(Icons.Default.Check, null, Modifier.size(CHAT_DROPDOWN_MENU_ICON_SIZE_DP.dp))

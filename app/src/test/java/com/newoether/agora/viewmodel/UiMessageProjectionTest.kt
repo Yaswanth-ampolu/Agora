@@ -36,6 +36,7 @@ class UiMessageProjectionTest {
                 toolArgs = """{"command":"pwd"}""",
                 toolResult = "workspace",
                 toolDisplayName = "Run shell",
+                toolTarget = "Quantum",
                 toolResultText = "workspace",
                 toolStructuredResult = """{"path":"workspace"}""",
             ),
@@ -54,6 +55,7 @@ class UiMessageProjectionTest {
         assertEquals("""{"command":"pwd"}""", projected.toolCall?.arguments)
         assertEquals("formatted:workspace", projected.toolCall?.result)
         assertEquals("Run shell", projected.toolCall?.displayName)
+        assertEquals("Quantum", projected.toolCall?.target)
         assertEquals("workspace", projected.toolCall?.resultText)
         assertEquals("""{"path":"workspace"}""", projected.toolCall?.structuredResult)
     }

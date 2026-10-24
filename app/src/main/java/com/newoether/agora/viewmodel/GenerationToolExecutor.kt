@@ -55,7 +55,7 @@ internal data class AuthorizedToolResult(
 )
 
 internal interface GenerationToolPresentationSource {
-    fun presentationMetadata(name: String): ToolPresentationMetadata?
+    fun presentationMetadata(name: String, arguments: String? = null): ToolPresentationMetadata?
 }
 
 /**
@@ -141,10 +141,10 @@ internal class GenerationToolExecutor private constructor(
             .flatMap { it.definitions(context) }
             .filter { it.function.name in FILE_TOOL_NAMES }
 
-    override fun presentationMetadata(name: String): ToolPresentationMetadata? {
+    override fun presentationMetadata(name: String, arguments: String?): ToolPresentationMetadata? {
         if (name.isBlank()) return null
         for (provider in providers) {
-            provider.presentationMetadata(name)?.let { return it }
+            provider.presentationMetadata(name, arguments)?.let { return it }
         }
         return null
     }

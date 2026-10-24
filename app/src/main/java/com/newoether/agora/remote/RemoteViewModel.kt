@@ -291,9 +291,9 @@ internal class RemoteViewModel(
         if (!state.value.capabilities.models) return
         val client = clientFor(state.value) ?: return
         if (!visible || state.value.devices.firstOrNull { it.id == id }?.status != RemoteDeviceStatus.CONNECTED) return
-        loadModels(id, client)
+        loadModels(id, client, notifyFailure = true)
     }
-    private fun loadModels(id: String, client: FiloClient) {
+    private fun loadModels(id: String, client: FiloClient, notifyFailure: Boolean = false) {
         if (!state.value.capabilities.models) return
         if (modelLoading?.isActive == true) return
         val modelGeneration = ++modelEpoch
@@ -306,7 +306,9 @@ internal class RemoteViewModel(
                 }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (error: Exception) {
-                if (modelGeneration == modelEpoch && sameConnection(id, client) && state.value.deviceId == id) trace("models_failed", error)
+                if (modelGeneration == modelEpoch && sameConnection(id, client) && state.value.deviceId == id) {
+                    trace("models_failed", error, notify = notifyFailure)
+                }
             }
             finally {
                 if (modelGeneration == modelEpoch) mutableState.value = state.value.copy(modelsLoading = false)
@@ -500,6 +502,12 @@ internal class RemoteViewModel(
                 nodes = nodes, messageGroups = groups, hydrationEnabled = visible,
                 historyCursor = if (old.isEmpty()) incoming.last().nextCursor else state.value.historyCursor,
                 queued = page.queued, loading = false, failure = null,
+                session = state.value.session?.let { current ->
+                    nativeRuntime?.title?.let { current.copy(title = it) } ?: current
+                },
+                sessions = state.value.sessions.map { current ->
+                    if (current.id == sessionId && nativeRuntime?.title != null) current.copy(title = nativeRuntime.title) else current
+                },
                 runtime = nativeRuntime.takeIf { liveControl },
                 lastKnownModel = nativeRuntime?.model ?: state.value.lastKnownModel,
             )
@@ -566,6 +574,9 @@ internal class RemoteViewModel(
                         val page = client.sessions(cursor)
                         if (selected != selectionEpoch || !sameConnection(address, client) || !visible) return@launch
                         mutableState.value = state.value.copy(
+                            sessions = state.value.sessions.map { current ->
+                                page.sessions.firstOrNull { it.id == current.id }?.let { current.copy(title = it.title) } ?: current
+                            },
                             sessionStatuses = state.value.mergeListedSessionStatuses(address, page),
                         )
                     }

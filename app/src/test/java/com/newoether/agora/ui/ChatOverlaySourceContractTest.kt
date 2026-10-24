@@ -177,7 +177,7 @@ internal class ChatOverlaySourceContractTest : UiSourceContractFixture() {
         assertTrue(imageActions.contains("DialogWindowNoSystemDim()"))
         assertTrue(imageActions.contains("DialogWindowNoSystemAnimation()"))
         assertTrue(imageActions.contains("withFrameNanos { }"))
-        assertTrue(imageActions.contains("HttpClient.client.newCall("))
+        assertTrue(imageActions.contains("HttpClient.client.executeWithNetworkRetry("))
         assertTrue(videoPlayer.contains("R.layout.view_texture_video_player"))
         assertTrue(texturePlayerLayout.contains("""app:surface_type="texture_view""""))
         assertTrue(texturePlayerLayout.contains(

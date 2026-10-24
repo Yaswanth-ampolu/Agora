@@ -55,6 +55,9 @@ internal enum class ToolKind {
     SUBAGENT_WAIT,
     SUBAGENT_LIST,
     SUBAGENT_STOP,
+    SUBAGENT_DELETE,
+    MCP_LIST,
+    MCP_SEARCH,
     MCP,
     UNKNOWN,
 }
@@ -153,8 +156,13 @@ internal object ToolPresentationResolver {
 
     private fun compute(segment: MessageSegment): ToolPresentation {
         val toolName = segment.toolName.orEmpty()
+        val remoteShell = if (segment.remoteToolSource != null && isRemoteShellTool(toolName)) {
+            mapRemoteToolDetail(segment.remoteToolSource, toolName, segment.toolArgs,
+                segment.toolResult ?: segment.toolProgress, segment.toolState)
+        } else null
+        val remoteShellBody = remoteShell?.body as? ToolDetailBody.Shell
         val malformed = malformedCallOriginals(toolName, segment.toolArgs)
-        val kind = kindFor(toolName)
+        val kind = if (remoteShellBody != null) ToolKind.SHELL_EXECUTE else kindFor(toolName)
         val displayArguments = malformed?.arguments ?: segment.toolArgs
         val resultElement = parseElement(
             segment.toolStructuredResult ?: segment.toolResult.takeUnless {
@@ -164,7 +172,8 @@ internal object ToolPresentationResolver {
         val resultEnvelope = resultElement as? JsonObject
         val resultObject = effectiveResultObject(kind, resultEnvelope)
         val errorCode = resultObject.string("error") ?: resultEnvelope.string("error")
-        val exitCode = resultObject.int("exit_code") ?: resultEnvelope.int("exit_code")
+        val exitCode = remoteShellBody?.status?.toIntOrNull()
+            ?: resultObject.int("exit_code") ?: resultEnvelope.int("exit_code")
         val explicitState = stateFromWire(segment.toolState)
         // Until a result arrives, arguments can still be a JSON prefix and can also contain a very
         // large file payload. Never strictly parse that growing buffer on the UI thread. The
@@ -194,8 +203,7 @@ internal object ToolPresentationResolver {
         val failedFlag = resultObject.boolean("failed") == true ||
             resultEnvelope.boolean("failed") == true
         val wireFailure = explicitState == ToolPresentationState.FAILED
-        val failed = !declaredEmpty &&
-            (failureCode != null || failedFlag || wireFailure)
+        val failed = !declaredEmpty && (failureCode != null || failedFlag || wireFailure)
         val semanticEmpty = !failed && isSemanticEmpty(
             kind = kind,
             rawResult = segment.toolResult.orEmpty(),
@@ -243,7 +251,7 @@ internal object ToolPresentationResolver {
             rawStructuredResult = segment.toolStructuredResult,
             liveOutput = segment.toolProgress,
             subject = normalizeToolSummarySubject(
-                subject(kind, args, resultObject)
+                remoteShell?.codeArgument?.text ?: subject(kind, args, resultObject)
                     ?: subject(kind, args, resultEnvelope)
                     ?: streamingHints.subject,
             ),
@@ -331,6 +339,9 @@ internal object ToolPresentationResolver {
         "wait_agents" -> ToolKind.SUBAGENT_WAIT
         "list_agents" -> ToolKind.SUBAGENT_LIST
         "stop_agent" -> ToolKind.SUBAGENT_STOP
+        "delete_agent" -> ToolKind.SUBAGENT_DELETE
+        "mcp_list_servers" -> ToolKind.MCP_LIST
+        "mcp_search_tools" -> ToolKind.MCP_SEARCH
         else -> if (name.startsWith("mcp_")) ToolKind.MCP else ToolKind.UNKNOWN
     }
 
@@ -354,6 +365,8 @@ internal object ToolPresentationResolver {
     }
 
     private fun semanticCount(kind: ToolKind, result: JsonObject?): Int? = when (kind) {
+        ToolKind.MCP_LIST -> result.int("returned") ?: result.arraySize("servers")
+        ToolKind.MCP_SEARCH -> result.int("returned") ?: result.arraySize("tools")
         ToolKind.MEMORY_LIST,
         ToolKind.SKILL_LIST -> result.arraySize("files")
         ToolKind.WEB_SEARCH -> result.arraySize("results")
@@ -418,6 +431,7 @@ internal object ToolPresentationResolver {
         ToolKind.SKILL_EDIT,
         ToolKind.SKILL_DELETE -> arguments.string("name")
         ToolKind.WEB_SEARCH,
+        ToolKind.MCP_SEARCH,
         ToolKind.CONVERSATION_SEARCH -> arguments.string("query")
         ToolKind.WEB_FETCH -> arguments.string("url")
         ToolKind.CONVERSATION_READ -> result.string("title")

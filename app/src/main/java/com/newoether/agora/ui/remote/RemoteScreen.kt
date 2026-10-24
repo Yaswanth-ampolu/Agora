@@ -2,6 +2,9 @@ package com.newoether.agora.ui.remote
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
+import com.newoether.agora.remote.RemoteSession
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -152,9 +155,15 @@ internal fun RemoteScreen(vm: RemoteViewModel, settings: SettingsRepository, act
                         listState.layoutInfo.visibleItemsInfo.any { it.key == "sessions" } && !listState.canScrollForward
                     }.collect { atBottom -> if (atBottom) vm.loadMore() }
                 }
+                // The pull indicator belongs to a user pull only; background polling keeps the bottom bar.
+                var pulled by remember(displayed.deviceId) { mutableStateOf(false) }
+                LaunchedEffect(pulled, displayed.loading) { if (pulled && !displayed.loading) pulled = false }
                 CollapsingSettingsLazyScaffold(
                     listState = listState,
                     contentBottomPadding = 104.dp,
+                    refreshing = pulled && displayed.loading,
+                    // Always present so admission changes never rebuild the list (and its open menus).
+                    onRefresh = { if (current && active && !displayed.controlling) { pulled = true; vm.refresh() } },
                     title = displayed.devices.firstOrNull { it.id == displayed.deviceId }?.name
                         ?.ifBlank { null } ?: stringResource(R.string.remote_device), onBack = back,
                     actions = {
@@ -178,80 +187,106 @@ internal fun RemoteScreen(vm: RemoteViewModel, settings: SettingsRepository, act
                         else RemoteAgentChipRow(sources, displayed.selectedAdapter.id, vm::selectAdapter,
                             enabled = current && active)
                     }
-                    if (!displayed.loading && displayed.sessions.isEmpty() && !displayed.error) {
-                        item { Text(stringResource(R.string.remote_empty), Modifier.padding(16.dp)) }
-                    }
-                    if (displayed.sessions.isNotEmpty()) item(key = "sessions") {
+                    item(key = "sessions") {
+                        val frame = RemoteSessionListFrame(displayed.selectedAdapter.id, displayed.sessions, displayed.loading)
+                        // Source switches and loading/empty/list changes cross-fade; edits within one list do not.
+                        AnimatedContent(frame, label = "remoteSessionList",
+                            transitionSpec = { fadeIn(tween(200)) togetherWith fadeOut(tween(200)) using null },
+                            contentKey = { it.adapterId to it.phase }) { shown ->
                         SettingsGroup(
                             title = stringResource(R.string.remote_sessions),
-                            items = displayed.sessions.map { session -> {
-                                key(displayed.confirmationPath, session.id) {
-                                    var showMenu by remember { mutableStateOf(false) }
-                                    var action by remember { mutableStateOf<String?>(null) }
-                                    val actionsEnabled = current && active && !displayed.controlling
-                                    DisposableEffect(session.id) { onDispose { visibleRows.remove(session.id) } }
+                            items = buildList {
+                                if (shown.sessions.isEmpty()) add {
                                     SettingsItem(
-                                        modifier = Modifier.onGloballyPositioned { coordinates ->
-                                            val bounds = coordinates.boundsInWindow()
-                                            val shown = bounds.width > 0 && bounds.height > 0
-                                            if (shown) visibleRows[session.id] = true else visibleRows.remove(session.id)
-                                        }.clickable(enabled = current) {
-                                            forward = true; focus.clearFocus(); vm.selectSession(session)
+                                        modifier = Modifier.heightIn(min = 64.dp),
+                                        headlineContent = {
+                                            Text(stringResource(if (shown.loading) R.string.loading_label else R.string.remote_empty),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         },
-                                        headlineContent = { Text(session.displayTitle(stringResource(R.string.new_chat)), maxLines = 2, overflow = TextOverflow.Ellipsis) },
-                                        supportingContent = { Text(session.displayDirectory(),
-                                            maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                                        leadingContent = { Icon(Icons.Default.ChatBubbleOutline, null) },
-                                        trailingContent = {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                RemoteSessionIndicator(resolveDrawerConversationIndicator(
-                                                    isGenerating = displayed.sessionStatuses[displayed.sessionKey(session.id)]?.status == "active",
-                                                    isSelected = false,
-                                                    hasUnreadGeneration = displayed.hasUnreadGeneration(session.id),
-                                                ))
-                                                Box {
-                                                    IconButton(onClick = { showMenu = true }, enabled = current && active) {
-                                                        Icon(Icons.Default.MoreVert, stringResource(R.string.more))
-                                                    }
-                                                    AgoraDropdownMenu(
-                                                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                                        tonalElevation = 16.dp,
-                                                        expanded = showMenu, onDismissRequest = { showMenu = false },
-                                                    ) {
-                                                        AgoraDropdownMenuItem(
-                                                            text = { Text(stringResource(R.string.rename)) },
-                                                            leadingIcon = { Icon(Icons.Default.Edit, null) },
-                                                            enabled = actionsEnabled && displayed.capabilitiesFor(session).rename,
-                                                            onClick = { showMenu = false; action = "rename" },
-                                                        )
-                                                        AgoraDropdownMenuItem(
-                                                            text = { Text(stringResource(R.string.remote_archive), color = MaterialTheme.colorScheme.error) },
-                                                            leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
-                                                            enabled = actionsEnabled && displayed.capabilitiesFor(session).archive,
-                                                            onClick = { showMenu = false; action = "archive" },
-                                                        )
-                                                    }
-                                                }
-                                            }
+                                        supportingContent = if (shown.loading) null else ({
+                                            Text(stringResource(R.string.remote_empty_hint),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                                        }),
+                                        leadingContent = {
+                                            if (shown.loading) MotionAwareCircularProgressIndicator(
+                                                modifier = Modifier.size(20.dp), strokeWidth = 2.dp,
+                                            ) else Icon(Icons.Default.ChatBubbleOutline, null,
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
                                         },
-                                    )
-                                    if (action == "rename") ChatRenameDialog(
-                                        initialName = session.title,
-                                        initialDisplayName = session.displayTitle(stringResource(R.string.new_chat)),
-                                        onSave = { vm.renameSession(session.id, it); action = null },
-                                        onDismiss = { action = null },
-                                    )
-                                    if (action == "archive") ChatDeleteConfirmDialog(
-                                        phase = ChatDeleteDialogPhase.CONFIRM,
-                                        title = stringResource(R.string.remote_archive_title),
-                                        message = stringResource(R.string.remote_archive_message),
-                                        confirmLabel = stringResource(R.string.remote_archive),
-                                        onConfirm = { vm.archiveSession(session.id); action = null },
-                                        onDismiss = { action = null },
                                     )
                                 }
-                            } },
+                                shown.sessions.forEach { session ->
+                                    add {
+                                        key(displayed.confirmationPath, session.id) {
+                                            var showMenu by remember { mutableStateOf(false) }
+                                            var action by remember { mutableStateOf<String?>(null) }
+                                            val actionsEnabled = current && active && !displayed.controlling
+                                            DisposableEffect(session.id) { onDispose { visibleRows.remove(session.id) } }
+                                            SettingsItem(
+                                                modifier = Modifier.onGloballyPositioned { coordinates ->
+                                                    val bounds = coordinates.boundsInWindow()
+                                                    val shown = bounds.width > 0 && bounds.height > 0
+                                                    if (shown) visibleRows[session.id] = true else visibleRows.remove(session.id)
+                                                }.clickable(enabled = current) {
+                                                    forward = true; focus.clearFocus(); vm.selectSession(session)
+                                                },
+                                                headlineContent = { Text(session.displayTitle(stringResource(R.string.new_chat)), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                                                supportingContent = { Text(session.displayDirectory(),
+                                                    maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                                leadingContent = { Icon(Icons.Default.ChatBubbleOutline, null) },
+                                                trailingContent = {
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        RemoteSessionIndicator(resolveDrawerConversationIndicator(
+                                                            isGenerating = displayed.sessionStatuses[displayed.sessionKey(session.id)]?.status == "active",
+                                                            isSelected = false,
+                                                            hasUnreadGeneration = displayed.hasUnreadGeneration(session.id),
+                                                        ))
+                                                        Box {
+                                                            IconButton(onClick = { showMenu = true }, enabled = current && active) {
+                                                                Icon(Icons.Default.MoreVert, stringResource(R.string.more))
+                                                            }
+                                                            AgoraDropdownMenu(
+                                                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                                                tonalElevation = 16.dp,
+                                                                expanded = showMenu, onDismissRequest = { showMenu = false },
+                                                            ) {
+                                                                AgoraDropdownMenuItem(
+                                                                    text = { Text(stringResource(R.string.rename)) },
+                                                                    leadingIcon = { Icon(Icons.Default.Edit, null) },
+                                                                    enabled = actionsEnabled && displayed.capabilitiesFor(session).rename,
+                                                                    onClick = { showMenu = false; action = "rename" },
+                                                                )
+                                                                AgoraDropdownMenuItem(
+                                                                    text = { Text(stringResource(R.string.remote_archive), color = MaterialTheme.colorScheme.error) },
+                                                                    leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
+                                                                    enabled = actionsEnabled && displayed.capabilitiesFor(session).archive,
+                                                                    onClick = { showMenu = false; action = "archive" },
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                            )
+                                            if (action == "rename") ChatRenameDialog(
+                                                initialName = session.title,
+                                                initialDisplayName = session.displayTitle(stringResource(R.string.new_chat)),
+                                                onSave = { vm.renameSession(session.id, it); action = null },
+                                                onDismiss = { action = null },
+                                            )
+                                            if (action == "archive") ChatDeleteConfirmDialog(
+                                                phase = ChatDeleteDialogPhase.CONFIRM,
+                                                title = stringResource(R.string.remote_archive_title),
+                                                message = stringResource(R.string.remote_archive_message),
+                                                confirmLabel = stringResource(R.string.remote_archive),
+                                                onConfirm = { vm.archiveSession(session.id); action = null },
+                                                onDismiss = { action = null },
+                                            )
+                                        }
+                                    }
+                                }
+                            },
                         )
+                        }
                     }
                 }
             }
@@ -261,7 +296,7 @@ internal fun RemoteScreen(vm: RemoteViewModel, settings: SettingsRepository, act
     val progressVisible = remember { androidx.compose.animation.core.MutableTransitionState(false) }
     SideEffect {
         progressVisible.targetState = state.deviceId != null && state.session == null && !state.addingDevice &&
-            (state.loading || state.loadingMore || state.controlling)
+            ((state.loading && state.sessions.isNotEmpty()) || state.loadingMore || state.controlling)
     }
     AnimatedVisibility(
         visibleState = progressVisible,
@@ -272,6 +307,15 @@ internal fun RemoteScreen(vm: RemoteViewModel, settings: SettingsRepository, act
         MotionAwareLinearProgressIndicator(Modifier.fillMaxWidth().height(4.dp))
     }
     }
+}
+
+/** One rendered session list; the fading-out frame keeps its own source's rows. */
+private data class RemoteSessionListFrame(
+    val adapterId: String,
+    val sessions: List<RemoteSession>,
+    val loading: Boolean,
+) {
+    val phase: Int get() = when { sessions.isNotEmpty() -> 2; loading -> 1; else -> 0 }
 }
 
 /** Exact original drawer indicator sizes, priority, color and fade timing. */
@@ -329,7 +373,7 @@ private fun RemoteDevices(state: RemoteState, vm: RemoteViewModel, onBack: () ->
                         headlineContent = {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(device.name.ifBlank { stringResource(R.string.remote_device) }, Modifier.weight(1f, fill = false), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                McpStatusDot(status)
+                                RemoteStatusDot(status)
                             }
                         },
                         supportingContent = {

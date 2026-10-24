@@ -69,6 +69,7 @@ internal fun Resources.webToolDetail(segment: MessageSegment): WebToolDetail {
         squareCrop = segment.isImageGenerationSegment(),
         imageLabel = getString(R.string.tool_view_image),
         imageFailedLabel = getString(R.string.attachment_copy_failed_image),
+        supplemental = detail.supplemental.map { webToolDocument(it) },
     )
 }
 
@@ -119,6 +120,7 @@ internal data class WebToolDetail(
     val squareCrop: Boolean,
     val imageLabel: String,
     val imageFailedLabel: String,
+    val supplemental: List<WebToolDocument> = emptyList(),
 )
 
 @Serializable

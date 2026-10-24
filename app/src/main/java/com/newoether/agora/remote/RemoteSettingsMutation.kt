@@ -170,6 +170,15 @@ internal class RemoteSettingsMutation(
             if (!sameSource(owner.snapshot, owner.client)) return
             owner.confirmed = page.runtime
             if (isCurrent(owner, patch.selection)) acceptPage(owner.client, owner.session, generation, page)
+            val change = page.runtime?.settingsChange
+            if (owner.snapshot.selectedAdapter.family == "claude" && change != null) {
+                check((patch.settings.model == null || change.requested.model == patch.settings.model) &&
+                    (patch.settings.effort == null || change.requested.effort == patch.settings.effort)) {
+                    "Native settings evidence belongs to another change"
+                }
+                check(change.state != "failed") { "Native settings differ: model=${change.actualModel}, effort=${change.actualEffort}" }
+                if (change.state == "pending") return
+            }
             check(confirms(page.runtime, patch.settings)) { "Native settings were not confirmed" }
         } finally {
             settingsVersion++

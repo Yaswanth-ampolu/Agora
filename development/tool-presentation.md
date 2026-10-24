@@ -55,6 +55,49 @@ and lifecycle semantics stay unchanged; this is shared JSON presentation, not a 
 value prefixes model-facing text with `context: N (requested M)`, while structured content retains
 the actual backend result. Noninteger values still fail validation.
 
+## MCP Router Presentation
+
+`mcp_list_servers` is a distinct localized list action with no target or argument subject. Active
+wording describes listing MCP servers. Completed wording uses the returned page count when known,
+never the total directory size or available-tool count; an unknown count uses count-free wording.
+An empty page says no MCP servers were returned, without claiming the configured directory is empty.
+Concrete failures retain their reason; failures without one use the localized list-server fallback.
+The shared summary and ordinary JSON detail owners serve native and WebUI without a new layout.
+
+`mcp_search_tools` is a localized search action with its query as a bounded progressive subject.
+Active wording describes searching MCP tools. Completed wording uses the returned item count when
+known; a zero-item page explicitly says no matching tools were returned. Counts describe the
+returned page, never the entire matching catalog. Its result is ordinary immutable tool history.
+
+`mcp_call_tool` retains that exact protocol name and its original outer arguments. Provider metadata
+supplies the actual remote tool title and server target. Streaming metadata may inspect at most
+4096 argument characters and only resolve a complete root `tool_id` string. An incomplete ID, a
+nested ID, or an ID beyond that prefix does not supply a guessed title. At execution, the provider
+resolves the fully parsed exact target and may publish its remote title with `TargetResolved`.
+This event updates display metadata only and never creates a separate lifecycle.
+
+Persist the resolved title and target in the existing tool segment and `ToolCallData` projection,
+including completed result rows and fallback round construction. Replay, Regenerate and restored
+history consume those fields without requiring a connected or still-existing MCP server. Legacy
+per-tool MCP names retain their existing read-side title fallback. Native and WebUI consume the
+same localized title, lifecycle, summary and detail owners; neither changes protocol identity.
+
+## Remote Native Tools
+
+Remote tool payloads keep their native name, arguments, results and running state. A transient
+Remote hint admits a pure, read-only format mapper at the shared detail boundary. Complete supported
+Bash/shell, Read/Write/Edit/MultiEdit, Codex fileChange/apply_patch, Glob/LS/Grep and structured web
+results reuse the existing terminal, file, diff, path, match and search components. Unknown tools,
+missing required fields, wrong types and incomplete patches retain the original JSON/plain view.
+Unconsumed arguments and result metadata remain visible; mapping never mutates the Remote cache,
+native execution, Room history or Filo protocol. Running calls may show a complete command, write
+content or proposed diff before a result arrives. Native recorded lifecycle remains authoritative:
+a failed activity stays failed even when its shell output and exit code can be rendered. Shell format
+recognition selects the detail body without changing the recorded state. A nonzero exit code alone
+does not declare a failure when the source has not recorded one. Native failures and stopped results
+retain their evidence. A read removes a native line gutter only when every returned line supplies
+consecutive explicit line numbers.
+
 ## Localization
 
 Todo and Subagent tools use explicit built-in kinds and localized action titles, never the unknown-tool

@@ -26,6 +26,8 @@ data class ToolCallData(
     val responseOutputItemProvider: String? = null,
     /** Transcription description of a tool-result image; travels with the result row. */
     val transcription: String? = null,
+    /** Stable execution target retained for history without consulting a live registry. */
+    val target: String? = null,
 )
 
 @Serializable
@@ -99,6 +101,9 @@ data class MessageSegment(
     val responseOutputItemProvider: String? = null,
     /** Stable semantic cause for terminal error segments. Null keeps old rows backward-compatible. */
     val errorCode: String? = null,
+    /** Remote-only rendering hint; native tool payloads remain unchanged and never enter Room. */
+    @Transient
+    val remoteToolSource: String? = null,
     /** In-memory Provider delta boundaries for the active answer; never persisted to Room JSON. */
     @Transient
     val streamingTextDeltas: List<StreamingTextDelta> = emptyList(),

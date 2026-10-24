@@ -19,7 +19,7 @@ internal data class RemoteNotice(val stage: String, val failure: RemoteFailure, 
 internal enum class RemoteDelivery { SUBMITTING, ACCEPTED, DELIVERED, REJECTED, UNKNOWN }
 internal data class RemoteAttempt(
     val clientId: String, val text: String, val delivery: RemoteDelivery, val turnId: String? = null,
-    val accessKey: String? = null,
+    val accessKey: String? = null, val receiptKind: String = "",
 )
 internal data class RemoteState(
     val devices: List<RemoteDevice> = emptyList(), val deviceId: String? = null,

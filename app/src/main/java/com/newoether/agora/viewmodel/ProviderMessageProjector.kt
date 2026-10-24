@@ -61,6 +61,7 @@ internal fun projectProviderMessages(
                 toolCallId = segment.toolCallId,
                 resultImages = segment.toolImages,
                 displayName = segment.toolDisplayName,
+                target = segment.toolTarget,
                 resultText = segment.toolResultText,
                 structuredResult = segment.toolStructuredResult,
                 responseOutputItems = segment.responseOutputItems,
