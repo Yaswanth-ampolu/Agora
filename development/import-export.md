@@ -182,7 +182,7 @@ The following JSON field names are the complete current portable allowlist.
 | Context | `contextTokenBudget`, `visualizeContextRollout`, `contextCompactEnabled`, `contextCompactModel`, `contextCompactPrompt`, `contextCompactRetainCount`, `contextCompactThresholdPercent` |
 | Provider and reasoning | `codeExecutionEnabled`, `googleSearchEnabled`, `thinkingEnabled`, `thinkingLevel`, `thinkingBudgetEnabled`, `thinkingBudgetTokens`, `openAiServiceTierEnabled`, `openAiServiceTier`, `openAiResponsesApiEnabled`, `anthropicCacheEnabled`, `anthropicCacheTtl`, `providerBaseUrls` |
 | Title generation | `titleGenerationEnabled`, `titleGenerationModel`, `titleGenerationPrompt`, `titleGenerationNotificationsEnabled` |
-| Tool access | `accessPastConversations`, `accessSavedMemories`, `accessActiveMemory`, `accessSkills`, `todoEnabled`, `subagentToolsEnabled`, `subagentMaxTotal`, `subagentMaxConcurrent`, `subagentEnabledModels`, `subagentRecommendedModel`, `subagentCapsuleDisplayMode` |
+| Tool access | `accessPastConversations`, `accessSavedMemories`, `accessActiveMemory`, `accessSkills`, `todoEnabled`, `subagentToolsEnabled`, `subagentDeleteEnabled`, `subagentMaxTotal`, `subagentMaxConcurrent`, `subagentEnabledModels`, `subagentRecommendedModel`, `subagentCapsuleDisplayMode` |
 | Interaction | `askUserEnabled`, `askUserTimeoutMinutes` |
 | Search and embedding | `ragSearchEnabled`, `modelSearchMethod`, `manualSearchMethod`, `remoteEmbeddingModels`, `activeRemoteEmbeddingModelId`, `searchContextWindow`, `searchMatchLimit`, `ragThreshold`, `autoCacheEnabled`, `showUncachedNotification` |
 | Language, Web Search, and image generation | `appLanguage`, `webSearchEnabled`, `webSearchProvider`, `webSearchNumResults`, `webSearchBaseUrl`, `imageGenEnabled`, `imageGenModel`, `imageGenSize`, `autoUpdateCheck` |
@@ -228,6 +228,8 @@ effective values. These preferences never restore pending questions or restart a
 local preference when its field is absent. REPLACE clears both keys before restoring present fields,
 so older archives resolve to true. They control tool admission, not conversation Todo contents or
 subagent ownership, and contain no credentials or device paths.
+`subagentDeleteEnabled` is a default-false portable boolean with the same MERGE/REPLACE rules;
+older archives resolve to false. It controls only `delete_agent` admission.
 
 `subagentMaxTotal` and `subagentMaxConcurrent` are secret-free integer limits per parent, with
 range 1–16 for both and defaults 16 and 4. There is no unlimited value. Stored reads, saves and

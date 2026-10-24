@@ -878,6 +878,12 @@
     <string name="tool_waited_agents">Đã kết thúc chờ tác nhân phụ</string>
     <string name="tool_listed_agents">Đã liệt kê tác nhân phụ</string>
     <string name="tool_stopped_agent">Đã dừng tác nhân phụ</string>
+    <string name="tool_delete_agent">Xóa tác nhân phụ</string>
+    <string name="tool_deleting_agent">Đang xóa tác nhân phụ…</string>
+    <string name="tool_deleted_agent">Đã xóa tác nhân phụ</string>
+    <string name="subagents_allow_delete">Cho phép xóa tác nhân phụ</string>
+    <string name="subagents_allow_delete_desc">Cho phép cuộc trò chuyện cha xóa vĩnh viễn các tác nhân phụ đang rảnh để giải phóng chỗ. Tác nhân phụ đang chạy và kết quả chưa được gửi sẽ không bao giờ bị xóa.</string>
+    <string name="subagent_deleted_by_parent">Tác nhân phụ này đã bị cuộc trò chuyện cha xóa.</string>
     <string name="tool_todo_empty">Danh sách việc cần làm trống</string>
     <string name="tool_agents_empty">Không có tác nhân phụ</string>
     <string name="tool_agent_results_empty">Không có kết quả nào từ tác nhân phụ được trả về</string>

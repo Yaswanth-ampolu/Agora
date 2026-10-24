@@ -34,6 +34,22 @@ class SubagentToolProviderTest {
         assertTrue(sendDescription.contains("does not interrupt"))
     }
 
+    @Test fun deleteToolAppearsAndRunsOnlyWhenItsSettingIsEnabled() = runTest {
+        assertFalse(provider.definitions(context).any { it.function.name == "delete_agent" })
+        assertTrue(provider.executeOneShotResult("delete_agent", """{"agent_id":"child"}""", context).isError)
+        coVerify(exactly = 0) { manager.delete(any(), any()) }
+        val enabled = context.copy(subagentDeleteEnabled = true)
+        assertEquals("delete_agent", provider.definitions(enabled).last().function.name)
+        assertTrue(provider.definitions(enabled.copy(subagentToolsEnabled = false)).isEmpty())
+        coEvery { manager.delete("child", enabled) } returns Unit
+        val result = provider.executeOneShotResult("delete_agent", """{"agent_id":"child"}""", enabled)
+        assertFalse(result.isError)
+        coVerify(exactly = 1) { manager.delete("child", enabled) }
+        coEvery { manager.delete("busy", enabled) } throws IllegalStateException("Subagent is running")
+        val rejected = provider.executeOneShotResult("delete_agent", """{"agent_id":"busy"}""", enabled)
+        assertTrue(rejected.isError && rejected.text.contains("Subagent is running"))
+    }
+
     @Test fun configuredCandidatesAndOnlyValidRecommendationsAppearInDescriptions() {
         val restricted = context.copy(subagentModelIds = listOf("Provider:two"),
             subagentRecommendedModel = "Provider:two")

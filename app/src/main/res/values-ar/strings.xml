@@ -872,6 +872,12 @@
     <string name="tool_waited_agents">انتهى انتظار الوكلاء الفرعيين</string>
     <string name="tool_listed_agents">تم عرض الوكلاء الفرعيين</string>
     <string name="tool_stopped_agent">تم إيقاف الوكيل الفرعي</string>
+    <string name="tool_delete_agent">حذف وكيل فرعي</string>
+    <string name="tool_deleting_agent">جارٍ حذف الوكيل الفرعي…</string>
+    <string name="tool_deleted_agent">تم حذف الوكيل الفرعي</string>
+    <string name="subagents_allow_delete">السماح بحذف الوكلاء الفرعيين</string>
+    <string name="subagents_allow_delete_desc">السماح للمحادثة الأصلية بحذف وكلائها الفرعيين الخاملين نهائيًا لتحرير أماكن. لا يُحذف أبدًا الوكلاء الفرعيون قيد التشغيل أو النتائج التي لم تُسلَّم.</string>
+    <string name="subagent_deleted_by_parent">حذفت المحادثة الأصلية هذا الوكيل الفرعي.</string>
     <string name="tool_todo_empty">قائمة المهام فارغة</string>
     <string name="tool_agents_empty">لا يوجد وكلاء فرعيون</string>
     <string name="tool_agent_results_empty">لم تُرجع أي نتائج من الوكلاء الفرعيين</string>

@@ -62,6 +62,7 @@ import com.newoether.agora.viewmodel.ChatViewModel
 @Composable
 fun SettingsSubagentPage(viewModel: ChatViewModel, onBack: () -> Unit) {
     val subagentToolsEnabled by viewModel.settings.subagentToolsEnabled.collectAsState()
+    val subagentDeleteEnabled by viewModel.settings.subagentDeleteEnabled.collectAsState()
     val subagentMaxTotal by viewModel.settings.subagentMaxTotal.collectAsState()
     val subagentMaxConcurrent by viewModel.settings.subagentMaxConcurrent.collectAsState()
     val subagentEnabledModels by viewModel.settings.subagentEnabledModels.collectAsState()
@@ -89,6 +90,8 @@ fun SettingsSubagentPage(viewModel: ChatViewModel, onBack: () -> Unit) {
         subagentMaxConcurrent = subagentMaxConcurrent,
         onSubagentMaxTotalChange = viewModel.settings::setSubagentMaxTotal,
         onSubagentMaxConcurrentChange = viewModel.settings::setSubagentMaxConcurrent,
+        subagentDeleteEnabled = subagentDeleteEnabled,
+        onSubagentDeleteEnabledChange = viewModel.settings::setSubagentDeleteEnabled,
     )
 }
 
@@ -111,6 +114,8 @@ internal fun SettingsSubagentContent(
     subagentMaxConcurrent: Int = DEFAULT_SUBAGENT_MAX_CONCURRENT,
     onSubagentMaxTotalChange: (Int) -> Unit = {},
     onSubagentMaxConcurrentChange: (Int) -> Unit = {},
+    subagentDeleteEnabled: Boolean = false,
+    onSubagentDeleteEnabledChange: (Boolean) -> Unit = {},
 ) {
     val allowedModels = remember(subagentEnabledModels, enabledModels) {
         subagentEnabledModels.orEmpty().intersect(enabledModels).sorted()
@@ -137,26 +142,49 @@ internal fun SettingsSubagentContent(
         SettingsGroupColumn {
             SettingsGroup(
                 title = stringResource(R.string.settings_subagents),
-                items = listOf {
-                    SettingsItem(
-                        headlineContent = { Text(stringResource(R.string.subagents_enable)) },
-                        supportingContent = { Text(stringResource(R.string.subagents_enable_desc)) },
-                        leadingContent = {
-                            Icon(
-                                Icons.Default.AccountTree,
-                                null,
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
-                        },
-                        trailingContent = {
-                            Switch(checked = subagentToolsEnabled, onCheckedChange = null)
-                        },
-                        modifier = Modifier.toggleable(
-                            value = subagentToolsEnabled,
-                            role = Role.Switch,
-                            onValueChange = onSubagentToolsEnabledChange,
-                        ),
-                    )
+                items = buildList {
+                    add {
+                        SettingsItem(
+                            headlineContent = { Text(stringResource(R.string.subagents_enable)) },
+                            supportingContent = { Text(stringResource(R.string.subagents_enable_desc)) },
+                            leadingContent = {
+                                Icon(
+                                    Icons.Default.AccountTree,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            },
+                            trailingContent = {
+                                Switch(checked = subagentToolsEnabled, onCheckedChange = null)
+                            },
+                            modifier = Modifier.toggleable(
+                                value = subagentToolsEnabled,
+                                role = Role.Switch,
+                                onValueChange = onSubagentToolsEnabledChange,
+                            ),
+                        )
+                    }
+                    if (subagentToolsEnabled) add {
+                        SettingsItem(
+                            headlineContent = { Text(stringResource(R.string.subagents_allow_delete)) },
+                            supportingContent = { Text(stringResource(R.string.subagents_allow_delete_desc)) },
+                            leadingContent = {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            },
+                            trailingContent = {
+                                Switch(checked = subagentDeleteEnabled, onCheckedChange = null)
+                            },
+                            modifier = Modifier.toggleable(
+                                value = subagentDeleteEnabled,
+                                role = Role.Switch,
+                                onValueChange = onSubagentDeleteEnabledChange,
+                            ),
+                        )
+                    }
                 },
             )
             if (subagentToolsEnabled) {

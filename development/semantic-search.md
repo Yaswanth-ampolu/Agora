@@ -55,6 +55,28 @@ Peak application memory is therefore proportional to one configured page, the ca
 bounded top-K heap, and the final bounded message set. It is not proportional to embedding-row
 count or total cached text.
 
+### Literal history search
+
+Keyword search shares `HISTORY_MESSAGE_ELIGIBILITY` with semantic pages and final hydration.
+It retains literal substring matching (including Chinese, case-insensitive ASCII and escaped LIKE
+wildcards), conversation-title matches, and citation-title matches. Literal search does not impose
+the semantic minimum text length; existing short nonempty messages remain searchable.
+
+`ChatSearchDao` seeks `(timestamp, id)` newest first through `index_messages_timestamp_id`.
+A limited inner query selects at most 128 message identities before the outer query applies shared
+visibility, text/title LIKE matching and citation eligibility. Hidden rows advance the cursor but
+cannot match or cause text/JSON to be returned. SQL returns only identity, time, a match flag, and
+eligible citation JSON; Kotlin decodes citation titles outside the database read. The repository stops
+at the requested count, hydrates only winners and rechecks visibility. It runs on IO, checks
+cancellation during matching and yields between pages. No whole-search transaction, OFFSET scan,
+full-entity corpus load or second citation scan is allowed. A miss still scans bounded pages until
+exhaustion; corpus-wide work is cancellable and never one unbounded database statement.
+
+Schema 41 adds only the timestamp/id B-tree index, preserving all messages and existing indexes.
+It requires no tokenizer, FTS payload table or message-text backfill. SQLite builds this additive
+index once during migration; migration cost is separate from ongoing query latency.
+
+
 ## 3. Ownership
 
 | Owner | Responsibility | Prohibited responsibility |

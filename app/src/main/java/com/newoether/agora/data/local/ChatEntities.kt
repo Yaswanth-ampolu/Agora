@@ -240,7 +240,9 @@ data class EmbeddingEntity(
     indices = [
         Index(value = ["conversationId"]),
         Index(value = ["runId"]),
+        Index(value = ["parentId"]),
         Index(value = ["id", "images", "attachmentMeta"]),
+        Index(value = ["timestamp", "id"]),
     ],
     foreignKeys = [
         ForeignKey(

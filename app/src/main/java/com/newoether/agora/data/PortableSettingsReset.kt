@@ -78,6 +78,7 @@ internal fun clearPortableSettings(prefs: MutablePreferences) {
     prefs.remove(ASK_USER_TIMEOUT_MINUTES)
     prefs.remove(TODO_ENABLED)
     prefs.remove(SUBAGENT_TOOLS_ENABLED)
+    prefs.remove(SUBAGENT_DELETE_ENABLED)
     prefs.remove(SUBAGENT_MAX_TOTAL)
     prefs.remove(SUBAGENT_MAX_CONCURRENT)
     prefs.remove(SUBAGENT_CAPSULE_DISPLAY_MODE)

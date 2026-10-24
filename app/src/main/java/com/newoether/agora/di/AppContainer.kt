@@ -95,6 +95,7 @@ class AppContainer(
         ConversationRepository(
             chatDao = chatDao,
             database = database,
+            subagentGenerationIds = conversationExecutionCoordinator.admittedGenerationIds,
             generationErrorFormatter = { raw ->
                 com.newoether.agora.viewmodel.normalizePersistedGenerationErrorText(
                     appContext, raw.ifBlank { appContext.getString(com.newoether.agora.R.string.failed_to_generate) },
@@ -314,6 +315,7 @@ class AppContainer(
             },
             enqueueMessage = { id, text, context -> chatRuntime.enqueueSubagentMessage(id, text, context) },
             stopLoop = { loopManager.stopLoop(it) },
+            deleteIdleChild = { id, parentId -> chatRuntime.deleteIdleSubagent(id, parentId) },
         )
     }
     val subagentToolProvider: com.newoether.agora.tool.SubagentToolProvider by lazy {

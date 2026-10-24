@@ -875,6 +875,12 @@
     <string name="tool_waited_agents">已結束等待子代理</string>
     <string name="tool_listed_agents">已列出子代理</string>
     <string name="tool_stopped_agent">已停止子代理</string>
+    <string name="tool_delete_agent">刪除子代理</string>
+    <string name="tool_deleting_agent">正在刪除子代理…</string>
+    <string name="tool_deleted_agent">已刪除子代理</string>
+    <string name="subagents_allow_delete">允許刪除子代理</string>
+    <string name="subagents_allow_delete_desc">允許父對話永久刪除閒置的子代理以釋出名額。執行中的子代理和尚未交付的結果不會被刪除。</string>
+    <string name="subagent_deleted_by_parent">此子代理已被其父對話刪除。</string>
     <string name="tool_todo_empty">待辦清單為空</string>
     <string name="tool_agents_empty">目前沒有子代理</string>
     <string name="tool_agent_results_empty">未傳回子代理結果</string>

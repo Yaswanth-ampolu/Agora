@@ -186,6 +186,7 @@ class SettingsRepository(
     val askUserTimeoutMinutes: StateFlow<Int> = publication.hot(settingsManager.askUserTimeoutMinutes, com.newoether.agora.data.DEFAULT_ASK_USER_TIMEOUT_MINUTES)
     val todoEnabled: StateFlow<Boolean> = publication.hot(settingsManager.todoEnabled, true)
     val subagentToolsEnabled: StateFlow<Boolean> = publication.hot(settingsManager.subagentToolsEnabled, true)
+    val subagentDeleteEnabled: StateFlow<Boolean> = publication.hot(settingsManager.subagentDeleteEnabled, false)
     val subagentMaxTotal: StateFlow<Int> = publication.hot(settingsManager.subagentMaxTotal, DEFAULT_SUBAGENT_MAX_TOTAL)
     val subagentMaxConcurrent: StateFlow<Int> = publication.hot(settingsManager.subagentMaxConcurrent, DEFAULT_SUBAGENT_MAX_CONCURRENT)
     suspend fun getSubagentMaxTotal(): Int = settingsManager.subagentMaxTotal.first()
@@ -687,7 +688,6 @@ class SettingsRepository(
     fun setToolCallDisplayMode(mode: String) = scope.launch { settingsManager.saveToolCallDisplayMode(mode) }
     fun setThinkingSegmentDisplayMode(mode: String) =
         scope.launch { settingsManager.saveThinkingSegmentDisplayMode(mode) }
-
     fun setAutoExpandActiveGroup(enabled: Boolean) =
         scope.launch { settingsManager.saveAutoExpandActiveGroup(enabled) }
     fun setSchemeStyle(style: String) = scope.launch { settingsManager.saveSchemeStyle(style) }
@@ -697,7 +697,6 @@ class SettingsRepository(
     fun setSearchMatchLimit(n: Int) = scope.launch { settingsManager.saveSearchMatchLimit(n) }
     fun setSearchContextWindow(n: Int) = scope.launch { settingsManager.saveSearchContextWindow(n) }
     fun setRagThreshold(threshold: Float) = scope.launch { settingsManager.saveRagThreshold(threshold) }
-
     fun setShellConfirmEnabled(enabled: Boolean) = scope.launch { settingsManager.saveShellConfirmEnabled(enabled) }
     fun setAskUserEnabled(enabled: Boolean) = scope.launch { settingsManager.saveAskUserEnabled(enabled) }
     fun setAskUserTimeoutMinutes(minutes: Int) = scope.launch { settingsManager.saveAskUserTimeoutMinutes(minutes) }
@@ -705,6 +704,7 @@ class SettingsRepository(
     fun setSubagentMaxTotal(value: Int) = scope.launch { settingsManager.saveSubagentMaxTotal(value) }
     fun setSubagentMaxConcurrent(value: Int) = scope.launch { settingsManager.saveSubagentMaxConcurrent(value) }
     fun setSubagentToolsEnabled(enabled: Boolean) = scope.launch { settingsManager.saveSubagentToolsEnabled(enabled) }
+    fun setSubagentDeleteEnabled(enabled: Boolean) = scope.launch { settingsManager.saveSubagentDeleteEnabled(enabled) }
     fun setSubagentCapsuleDisplayMode(mode: String) = scope.launch { settingsManager.saveSubagentCapsuleDisplayMode(mode) }
     fun addShellDevice(device: ShellDeviceConfig, onResult: (Boolean) -> Unit = {}, onError: (Exception) -> Unit = { onResult(false) }) =
         persistShellDevice(device, creating = true, onResult, onError)

@@ -54,6 +54,7 @@ class ConversationRepository(
     private val semanticModelSnapshotProvider: suspend () -> SemanticModelSnapshot = {
         semanticModelSnapshot("", emptyList())
     },
+    internal val subagentGenerationIds: kotlinx.coroutines.flow.StateFlow<Set<String>> = kotlinx.coroutines.flow.MutableStateFlow(emptySet()),
 ) {
     private val branchSelections = ConversationBranchSelections(chatDao)
     // SubagentManager alone admits/removes these jobs; observers share their exact lifetime.

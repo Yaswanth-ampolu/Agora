@@ -23,6 +23,7 @@ private fun GenerationContext.narrowPermissions(restrictions: List<GenerationCon
 
     return copy(
         subagentToolsEnabled = allowed { it.subagentToolsEnabled },
+        subagentDeleteEnabled = allowed { it.subagentDeleteEnabled },
         todoEnabled = allowed { it.todoEnabled },
         accessSavedMemories = allowed { it.accessSavedMemories },
         accessActiveMemory = allowed { it.accessActiveMemory },

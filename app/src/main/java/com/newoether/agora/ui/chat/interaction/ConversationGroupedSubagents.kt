@@ -51,8 +51,13 @@ internal fun ConversationGroupedSubagentCapsule(
 ) {
     val first = agents.firstOrNull() ?: return
     val single = agents.singleOrNull()
-    val title = single?.title ?: pluralStringResource(R.plurals.subagents_count, agents.size, agents.size)
-    val status = single?.status ?: if (agents.any { it.status == "running" }) "running" else "idle"
+    val runningCount = agents.count { it.status == "running" }
+    val title = if (runningCount > 0) {
+        pluralStringResource(R.plurals.subagents_running_count, runningCount, runningCount)
+    } else {
+        pluralStringResource(R.plurals.subagents_count, agents.size, agents.size)
+    }
+    val status = single?.status ?: if (runningCount > 0) "running" else "idle"
     SubagentNavigationCapsule(
         title = title, status = status, selected = agents.any { it.id == conversationId }, active = active,
         identity = "group:${first.parentConversationId}",

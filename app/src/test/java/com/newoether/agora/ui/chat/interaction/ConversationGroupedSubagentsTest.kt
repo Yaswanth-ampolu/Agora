@@ -66,7 +66,7 @@ class ConversationGroupedSubagentsTest {
         }
         compose.onNodeWithTag("subagents-capsule:parent").assertDoesNotExist()
         compose.runOnIdle { agents = listOf(agent("z")) }
-        compose.onNodeWithText("Worker z").performClick()
+        compose.onNodeWithText("1 Subagent").performClick()
         assertEquals("z", selected)
         compose.onNode(isDialog()).assertDoesNotExist()
         compose.runOnIdle { agents = listOf(agent("z", "failed"), agent("a", "stopped")) }
@@ -169,6 +169,51 @@ class ConversationGroupedSubagentsTest {
         compose.onNode(progress, useUnmergedTree = true).assertExists()
     }
 
+    @Test fun runningLabelCountsOnlyRunningChildrenAndReturnsToTheIdleTotal() {
+        var agents by mutableStateOf((1..14).map { index ->
+            agent("$index", if (index == 1) "running" else listOf("idle", "completed", "failed", "stopped")[index % 4])
+        })
+        val progress = SemanticsMatcher.expectValue(
+            SemanticsProperties.ProgressBarRangeInfo, ProgressBarRangeInfo.Indeterminate,
+        )
+        compose.setContent {
+            MaterialTheme {
+                ConversationToolsRow("parent", emptyList(), agents, {}, {},
+                    subagentCapsuleDisplayMode = SubagentCapsuleDisplayModes.GROUPED)
+            }
+        }
+        compose.onNodeWithText("1 Running").assertExists()
+        compose.onNodeWithText("14 Subagents").assertDoesNotExist()
+        compose.onNode(progress, useUnmergedTree = true).assertExists()
+        val capsule = compose.onNodeWithTag("subagents-capsule:parent")
+        val identity = capsule.fetchSemanticsNode().id
+        compose.runOnIdle { agents = agents.map { if (it.id == "2") it.copy(status = "running") else it } }
+        compose.onNodeWithText("2 Running").assertExists()
+        assertEquals(identity, capsule.fetchSemanticsNode().id)
+        compose.runOnIdle { agents = agents.map { it.copy(status = "idle") } }
+        compose.onNodeWithText("14 Subagents").assertExists()
+        compose.onNodeWithText("2 Running").assertDoesNotExist()
+        compose.onNode(progress, useUnmergedTree = true).assertDoesNotExist()
+        assertEquals(identity, capsule.fetchSemanticsNode().id)
+    }
+
+    @Test fun singleGroupedChildUsesCountLabelsAndRetainsDirectNavigation() {
+        var child by mutableStateOf(agent("a", "running"))
+        var selected: String? = null
+        compose.setContent {
+            MaterialTheme {
+                ConversationToolsRow("parent", emptyList(), listOf(child), { selected = it }, {},
+                    subagentCapsuleDisplayMode = SubagentCapsuleDisplayModes.GROUPED)
+            }
+        }
+        compose.onNodeWithText("1 Running").performClick()
+        assertEquals("a", selected)
+        compose.onNode(isDialog()).assertDoesNotExist()
+        compose.runOnIdle { child = child.copy(status = "idle") }
+        compose.onNodeWithText("1 Subagent").assertExists()
+        compose.onNodeWithText("1 Running").assertDoesNotExist()
+    }
+
     @Test fun invalidatingSheetNeverReopensStaleFamilyOrKeepsPendingNavigation() {
         var agents by mutableStateOf(listOf(agent("a"), agent("b")))
         var family by mutableStateOf<String?>("parent")
@@ -244,10 +289,12 @@ class ConversationGroupedSubagentsTest {
 
     private fun verifyCountCrossfade(reduced: Boolean) {
         var agents by mutableStateOf(listOf(agent("a")))
+        lateinit var one: String
         lateinit var two: String
         lateinit var three: String
         var selections = 0
         compose.setContent {
+            one = androidx.compose.ui.res.pluralStringResource(R.plurals.subagents_count, 1, 1)
             two = androidx.compose.ui.res.pluralStringResource(R.plurals.subagents_count, 2, 2)
             three = androidx.compose.ui.res.pluralStringResource(R.plurals.subagents_count, 3, 3)
             CompositionLocalProvider(LocalAgoraMotionPolicy provides AgoraMotionPolicy(reduced)) {
@@ -262,7 +309,7 @@ class ConversationGroupedSubagentsTest {
         compose.mainClock.autoAdvance = false
         compose.runOnIdle { agents = listOf(agent("a"), agent("b")) }
         advance(96)
-        compose.onNodeWithText("Worker a", useUnmergedTree = true).assertExists()
+        compose.onNodeWithText(one, useUnmergedTree = true).assertExists()
         compose.onNodeWithText(two, useUnmergedTree = true).assertExists()
         assertEquals(initial.id, capsule.fetchSemanticsNode().id)
         assertEquals(initial.boundsInRoot.height, capsule.fetchSemanticsNode().boundsInRoot.height)
@@ -273,17 +320,19 @@ class ConversationGroupedSubagentsTest {
         compose.onNodeWithText(three, useUnmergedTree = true).assertExists()
         assertEquals(initial.id, capsule.fetchSemanticsNode().id)
         advance(400)
-        compose.onNodeWithText("Worker a", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithText(one, useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithText(two, useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithText(three, useUnmergedTree = true).assertExists()
         compose.runOnIdle { agents = listOf(agent("a").copy(title = "Renamed worker")) }
         advance(96)
         compose.onNodeWithText(three, useUnmergedTree = true).assertExists()
-        compose.onNodeWithText("Renamed worker", useUnmergedTree = true).assertExists()
+        compose.onNodeWithText(one, useUnmergedTree = true).assertExists()
+        compose.onNodeWithText("Renamed worker", useUnmergedTree = true).assertDoesNotExist()
         assertEquals(initial.id, capsule.fetchSemanticsNode().id)
         advance(400)
         compose.onNodeWithText(three, useUnmergedTree = true).assertDoesNotExist()
-        compose.onNodeWithText("Renamed worker", useUnmergedTree = true).assertExists()
+        compose.onNodeWithText(one, useUnmergedTree = true).assertExists()
+        compose.onNodeWithText("Renamed worker", useUnmergedTree = true).assertDoesNotExist()
         capsule.performClick()
         assertEquals(1, selections)
         compose.onNode(isDialog()).assertDoesNotExist()

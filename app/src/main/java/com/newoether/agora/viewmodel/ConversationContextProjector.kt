@@ -18,6 +18,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import java.util.concurrent.atomic.AtomicLong
 
 internal data class ConversationContextProjection(
@@ -44,6 +45,8 @@ internal class ConversationContextProjector(
     private val requestIds = AtomicLong(0L)
     private val _projection = MutableStateFlow(ConversationContextProjection())
     val projection: StateFlow<ConversationContextProjection> = _projection.asStateFlow()
+    private val _invalidationRevision = MutableStateFlow(0L)
+    val invalidationRevision: StateFlow<Long> = _invalidationRevision.asStateFlow()
     private var latestRequest: Job? = null
     private val projectionTurn = Mutex()
 
@@ -76,6 +79,8 @@ internal class ConversationContextProjector(
             usage = previousUsage,
             loading = true,
         )
+        // Room may already have emitted an equal graph. Give the UI a separate request key.
+        _invalidationRevision.update { it + 1L }
     }
 
     suspend fun project(

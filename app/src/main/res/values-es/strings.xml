@@ -872,6 +872,12 @@
     <string name="tool_waited_agents">Espera de subagentes finalizada</string>
     <string name="tool_listed_agents">Subagentes listados</string>
     <string name="tool_stopped_agent">Subagente detenido</string>
+    <string name="tool_delete_agent">Eliminar subagente</string>
+    <string name="tool_deleting_agent">Eliminando subagente…</string>
+    <string name="tool_deleted_agent">Subagente eliminado</string>
+    <string name="subagents_allow_delete">Permitir eliminar subagentes</string>
+    <string name="subagents_allow_delete_desc">Permite que la conversación principal elimine de forma permanente sus subagentes inactivos para liberar espacio. Nunca se eliminan subagentes en ejecución ni resultados sin entregar.</string>
+    <string name="subagent_deleted_by_parent">La conversación principal eliminó este subagente.</string>
     <string name="tool_todo_empty">La lista de tareas está vacía</string>
     <string name="tool_agents_empty">No hay subagentes</string>
     <string name="tool_agent_results_empty">No se devolvieron resultados de subagentes</string>

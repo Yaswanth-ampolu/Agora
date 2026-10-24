@@ -21,6 +21,12 @@ data class GenerationPromptTemplate(
      * cache stable. Mid-Run edits become visible through read_active_memory and land next Run.
      */
     val activeMemory: String = "",
+    /**
+     * Skill catalog frozen with the template for the same reason as [activeMemory]: mid-Run
+     * skill edits must not rewrite the system prompt between Provider passes. Empty when skill
+     * access was off at capture time. Edits land next Run.
+     */
+    val skillCatalog: String = "",
 )
 
 data class GenerationConfig(
@@ -64,6 +70,8 @@ data class GenerationConfig(
 data class GenerationContext(
     val conversationId: String? = null,
     val subagentToolsEnabled: Boolean = false,
+    /** Exposes delete_agent; effective only together with [subagentToolsEnabled]. */
+    val subagentDeleteEnabled: Boolean = false,
     val enabledModelIds: List<String> = emptyList(),
     /** Null and empty both allow no new subagents; global enabled IDs are not a fallback. */
     val subagentModelIds: List<String>? = null,

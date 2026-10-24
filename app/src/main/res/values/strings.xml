@@ -853,6 +853,12 @@
     <string name="tool_waited_agents">Finished waiting for subagents</string>
     <string name="tool_listed_agents">Listed subagents</string>
     <string name="tool_stopped_agent">Stopped subagent</string>
+    <string name="tool_delete_agent">Delete Subagent</string>
+    <string name="tool_deleting_agent">Deleting subagent…</string>
+    <string name="tool_deleted_agent">Deleted subagent</string>
+    <string name="subagents_allow_delete">Allow Deleting Subagents</string>
+    <string name="subagents_allow_delete_desc">Let the parent conversation permanently delete its idle subagents to free slots. Running subagents and undelivered results are never deleted.</string>
+    <string name="subagent_deleted_by_parent">This subagent was deleted by its parent conversation.</string>
     <string name="tool_todo_empty">Todo list is empty</string>
     <string name="tool_agents_empty">No subagents</string>
     <string name="tool_agent_results_empty">No subagent results returned</string>

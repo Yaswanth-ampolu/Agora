@@ -495,7 +495,7 @@ class GenerationRequestBuilderProviderDisplayTest {
         verify { fixture.memoryManager.getActiveMemory() }
     }
     @Test
-    fun `active memory is frozen for every provider pass of one run`() = runTest {
+    fun `active memory and skill catalog are frozen for every provider pass of one run`() = runTest {
         val fixture = RequestBuilderFixture(
             providerName = Constants.PROVIDER_OPENAI,
             lowContextModeEnabled = false,
@@ -506,8 +506,9 @@ class GenerationRequestBuilderProviderDisplayTest {
             modelId = fixture.modelId,
         )
         val resolver = requireNotNull(snapshot.config.requestResolver)
-        // A tool call edits active memory mid-run; later passes must keep the captured text.
+        // Tool calls edit active memory and skills mid-run; later passes keep the captured text.
         every { fixture.memoryManager.getActiveMemory() } returns "edited mid-run"
+        every { fixture.skillManager.catalog() } returns "- edited.md: edited mid-run"
         val config = com.newoether.agora.api.ProviderConfig(apiKey = "key", modelId = "model")
         val first = resolver.resolve(emptyList(), config)
         val second = resolver.resolve(emptyList(), config)
@@ -710,6 +711,7 @@ internal class RequestBuilderFixture(
         every { settings.askUserTimeoutMinutes } returns MutableStateFlow(5)
         every { settings.todoEnabled } returns MutableStateFlow(true)
         every { settings.subagentToolsEnabled } returns MutableStateFlow(true)
+        every { settings.subagentDeleteEnabled } returns MutableStateFlow(false)
         every { settings.localLowContextModeEnabled } returns MutableStateFlow(false)
         every { settings.contextCompactModel } returns MutableStateFlow(null)
         every { settings.contextCompactPrompt } returns MutableStateFlow(COMPACT_PROMPT)

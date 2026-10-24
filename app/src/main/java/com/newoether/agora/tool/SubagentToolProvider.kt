@@ -18,7 +18,7 @@ class SubagentToolProvider(private val manager: SubagentManager) : ToolProvider 
         val recommendation = ctx.subagentRecommendedModel?.takeIf { it in models }?.let {
             " Recommended model ID: ${Json.encodeToString(it)} (hint only; model_id is still required and may select any available ID)."
         }.orEmpty()
-        return listOf(
+        return listOfNotNull(
             definition("spawn_agent", "Start an isolated subagent asynchronously. It receives only task, never this conversation's history. Available model IDs: ${Json.encodeToString(models)}$recommendation", mapOf(
                 "name" to ToolProperty("string", "Short subagent name."),
                 "model_id" to ToolProperty("string", "One exact available model ID; required even when a recommendation is present."),
@@ -36,6 +36,9 @@ class SubagentToolProvider(private val manager: SubagentManager) : ToolProvider 
             definition("stop_agent", "Cancel a subagent's live generation and await durable Stop settlement.", mapOf(
                 "agent_id" to ToolProperty("string", "Subagent conversation ID."),
             ), listOf("agent_id")),
+            if (ctx.subagentDeleteEnabled) definition("delete_agent", "Permanently delete an idle subagent belonging to this conversation, freeing its slot in the subagent count limit. Rejected while it is running, has queued messages, or has an undelivered result (call wait_agents first).", mapOf(
+                "agent_id" to ToolProperty("string", "Subagent conversation ID."),
+            ), listOf("agent_id")) else null,
         )
     }
 
@@ -46,6 +49,7 @@ class SubagentToolProvider(private val manager: SubagentManager) : ToolProvider 
 
     override suspend fun executeOneShotResult(name: String, arguments: String, ctx: GenerationContext): ToolExecutionResult = try {
         check(ctx.subagentToolsEnabled && name in NAMES) { "Subagent tools are unavailable" }
+        check(name != "delete_agent" || ctx.subagentDeleteEnabled) { "Deleting subagents is disabled in Settings" }
         val args = Json.parseToJsonElement(arguments.ifBlank { "{}" }).jsonObject
         fun string(key: String) = (args[key] as? JsonPrimitive)?.takeIf { it.isString }?.content
             ?.takeIf(String::isNotBlank) ?: error("$key is required")
@@ -93,6 +97,10 @@ class SubagentToolProvider(private val manager: SubagentManager) : ToolProvider 
                 manager.stop(string("agent_id"), ctx)
                 "Subagent stopped"
             }
+            "delete_agent" -> {
+                manager.delete(string("agent_id"), ctx)
+                "Subagent deleted"
+            }
             else -> error("Unknown subagent tool")
         }
         ToolExecutionResult(result)
@@ -108,6 +116,6 @@ class SubagentToolProvider(private val manager: SubagentManager) : ToolProvider 
         parameters = ToolParameters(properties = properties, required = required)))
 
     private companion object {
-        val NAMES = setOf("spawn_agent", "send_agent_message", "wait_agents", "list_agents", "stop_agent")
+        val NAMES = setOf("spawn_agent", "send_agent_message", "wait_agents", "list_agents", "stop_agent", "delete_agent")
     }
 }

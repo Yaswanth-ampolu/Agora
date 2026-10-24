@@ -61,6 +61,12 @@ interface ChatSubagentDao {
     fun observeParentConversationId(id: String): Flow<String?>
 
     @Query("""
+        SELECT DISTINCT parentConversationId FROM conversations
+        WHERE id IN (:conversationIds) AND parentConversationId IS NOT NULL
+    """)
+    fun observeSubagentParentIds(conversationIds: Set<String>): Flow<List<String>>
+
+    @Query("""
         SELECT root.id FROM conversations selected
         JOIN conversations root ON root.id = COALESCE(selected.parentConversationId, selected.id)
         WHERE selected.id = :conversationId AND root.parentConversationId IS NULL

@@ -112,7 +112,7 @@ class ConversationTitleGenerator(
     ): Result {
         var summary = ""
         var sourceModel: String? = null
-        // Freeze the selected path and only its first usable role payloads in one Room read.
+        // Freeze the selected path and its first user payload in one Room read.
         // Settings, notifications and local-model admission must not delay this source capture.
         val conversation = conversations.withProviderContextSnapshot {
             val target = conversations.getConversation(conversationId)
@@ -133,35 +133,17 @@ class ConversationTitleGenerator(
                 streamingMsg = streaming,
                 selectedChildren = conversations.restoreBranchSelections(conversationId),
             )
-            suspend fun firstMatchingMessage(participant: Participant): ChatMessage? {
-                for (message in path) {
-                    if (message.participant != participant) continue
-                    val projected = if (streaming != null && message.id == streaming.id) {
-                        streaming
-                    } else {
-                        val entity = conversations.getMessage(message.id) ?: continue
-                        if (entity.conversationId != conversationId) continue
-                        projectProviderMessages(
-                            entities = listOf(entity),
-                            includeStoredTranscriptions = true,
-                        ).singleOrNull() ?: continue
-                    }
-                    val text = if (participant == Participant.USER) {
-                        titleSourceText(projected)
-                    } else {
-                        projected.text.trim()
-                    }
-                    if (text.isNotBlank()) return projected
+            sourceModel = path.firstOrNull { it.participant == Participant.MODEL }?.modelName
+            val firstUser = path.firstOrNull { it.participant == Participant.USER }
+            if (firstUser != null) {
+                val entity = conversations.getMessage(firstUser.id)
+                if (entity?.conversationId == conversationId) {
+                    summary = projectProviderMessages(
+                        entities = listOf(entity),
+                        includeStoredTranscriptions = true,
+                    ).singleOrNull()?.let(::titleSourceText).orEmpty()
                 }
-                return null
             }
-            val firstUser = firstMatchingMessage(Participant.USER)
-            val firstModel = firstMatchingMessage(Participant.MODEL)
-            sourceModel = firstModel?.modelName
-            summary = listOfNotNull(
-                firstUser?.let { "User: ${titleSourceText(it)}" },
-                firstModel?.let { "Assistant: ${it.text.trim().take(500)}" },
-            ).joinToString("\n")
             target
         } ?: return Result.Failure("Conversation not found")
         if (summary.isBlank()) return Result.Failure("Conversation has no usable text")

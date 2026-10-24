@@ -872,6 +872,12 @@
     <string name="tool_waited_agents">하위 에이전트 대기를 마쳤습니다</string>
     <string name="tool_listed_agents">하위 에이전트 목록을 불러왔습니다</string>
     <string name="tool_stopped_agent">하위 에이전트를 중지했습니다</string>
+    <string name="tool_delete_agent">하위 에이전트 삭제</string>
+    <string name="tool_deleting_agent">하위 에이전트 삭제 중…</string>
+    <string name="tool_deleted_agent">하위 에이전트를 삭제했습니다</string>
+    <string name="subagents_allow_delete">하위 에이전트 삭제 허용</string>
+    <string name="subagents_allow_delete_desc">상위 대화가 유휴 상태의 하위 에이전트를 영구 삭제하여 자리를 확보할 수 있도록 허용합니다. 실행 중인 하위 에이전트와 전달되지 않은 결과는 삭제되지 않습니다.</string>
+    <string name="subagent_deleted_by_parent">이 하위 에이전트는 상위 대화에서 삭제되었습니다.</string>
     <string name="tool_todo_empty">할 일 목록이 비어 있습니다</string>
     <string name="tool_agents_empty">하위 에이전트가 없습니다</string>
     <string name="tool_agent_results_empty">반환된 하위 에이전트 결과가 없습니다</string>

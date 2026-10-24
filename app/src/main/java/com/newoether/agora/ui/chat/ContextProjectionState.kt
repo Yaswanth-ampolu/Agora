@@ -25,6 +25,7 @@ internal fun rememberContextProjectionInvalidationKey(
     val automationToolsEnabled by settings.automationToolsEnabled.collectAsState()
     val todoEnabled by settings.todoEnabled.collectAsState()
     val subagentToolsEnabled by settings.subagentToolsEnabled.collectAsState()
+    val subagentDeleteEnabled by settings.subagentDeleteEnabled.collectAsState()
     val enabledModels by settings.enabledModels.collectAsState()
     val subagentEnabledModels by settings.subagentEnabledModels.collectAsState()
     val subagentRecommendedModel by settings.subagentRecommendedModel.collectAsState()
@@ -47,6 +48,7 @@ internal fun rememberContextProjectionInvalidationKey(
         automationToolsEnabled,
         todoEnabled,
         subagentToolsEnabled,
+        subagentDeleteEnabled,
         enabledModels,
         subagentEnabledModels,
         subagentRecommendedModel,

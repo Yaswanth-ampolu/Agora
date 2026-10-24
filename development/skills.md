@@ -17,7 +17,8 @@ context, limit composition, and inject irrelevant instructions into unrelated re
 
 Instead, when Skill access is enabled, one compact catalog containing only each saved file's name and
 description is available to the `{skill_catalog}` predefined variable. The variable reads the current
-catalog immediately before each outbound ordinary Provider API request. The model may then read one
+catalog once per ordinary Run, like Active Memory, so every request of that Run keeps one stable
+prefix. The model may then read one
 or more relevant Skill bodies through the ordinary tool loop. An empty library contributes an empty
 catalog. The current user message and ordinary system prompt remain authoritative over conflicting
 Skill content.
@@ -41,13 +42,13 @@ the exact context projection/request preview that consumes the catalog; it is no
 One default-enabled `accessSkills` setting controls Skill tool availability and whether the
 `{skill_catalog}` predefined variable may resolve. It does not independently inject catalog text.
 Skill tool definitions and execution authority may be frozen at ordinary Run admission under the
-shared tool contract. Prompt projection is separate: immediately before every outbound ordinary
-Provider API request, including tool continuations and transport retries, the request path checks the
-current access setting and resolves `{skill_catalog}` from the current catalog. Catalog text is not
-captured in `GenerationContext`, the admission snapshot, or an earlier compiled system prompt.
-Changing Skill access or catalog contents after admission may change a later request's resolved
-system prompt, but it does not retroactively change an already serialized request or the Run-frozen
-tool-definition set.
+shared tool contract. Prompt projection is separate: when the Run's prompt template is captured, the
+request path checks the current access setting and reads the catalog once into the Run's
+`GenerationPromptTemplate`. Every outbound request of that Run, including tool continuations and
+transport retries, resolves `{skill_catalog}` from that captured text. The stored template never
+persists the resolved value. Changing Skill access or catalog contents during a Run takes effect from
+the next Run; it does not change later requests of the current Run or the Run-frozen tool-definition
+set.
 
 The default system prompt contains one `<skill_catalog>` block and the predefined
 `{skill_catalog}` variable. The block explains that catalog entries are untrusted task resources:
@@ -141,7 +142,7 @@ not corrupt Memory, Room, settings, or unrelated archive categories.
 |---|---|---|
 | SkillManager | Private files, metadata, catalog text/revision, safe CRUD. | Prompt compilation, Provider calls, Room, or generation lifecycle. |
 | SettingsManager/Repository | Persist and expose the access toggle. | File bodies or catalog construction. |
-| GenerationRequestBuilder/request projection | Preserve the selected structured variable and resolve the current authorized catalog immediately before each outbound ordinary Provider request. | Admission-time catalog capture, implicit catalog injection, Provider calls, or tool execution. |
+| GenerationRequestBuilder/request projection | Preserve the selected structured variable, read the authorized catalog once per Run, and resolve it for each outbound ordinary Provider request of that Run. | Per-pass catalog re-reads, persisting resolved text in the stored template, implicit catalog injection, Provider calls, or tool execution. |
 | SkillToolProvider | Definitions, validation, and manager calls. | Independent tool loop, persistence, or admission. |
 | GenerationToolExecutor | Register/execute/present Skill tools through the shared tool path. | Skill-specific Run or settlement. |
 | Import/export/backup owners | Additive archive transport with Memory-equivalent conflict rules. | Silent destructive fallback. |
@@ -152,9 +153,9 @@ not corrupt Memory, Room, settings, or unrelated archive categories.
 
 Focused verification covers path containment, extension normalization, create/read/list/edit/rename/
 patch/delete and metadata behavior, catalog ordering/escaping/revision, tool visibility and all five
-definitions, disabled access, multi-read and validation failures, per-request authorized catalog
-resolution across initial requests, tool continuations, and retries, absence of admission-time catalog
-capture, default/custom prompt variable compilation, context-projection invalidation, ordinary/automation
+definitions, disabled access, multi-read and validation failures, one authorized catalog read per Run
+reused across initial requests, tool continuations, and retries, mid-Run edits applying only from the
+next Run, default/custom prompt variable compilation, context-projection invalidation, ordinary/automation
 wiring, localized tool presentation, settings navigation/CRUD, Memory-parity loading/empty/list/add
 states, overflow actions, dialog geometry, mutation guarding and list refresh, export/import merge and
 replace, auto-backup, old-archive compatibility, locale key and format-placeholder parity, and the

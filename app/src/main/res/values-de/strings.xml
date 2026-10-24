@@ -872,6 +872,12 @@
     <string name="tool_waited_agents">Warten auf Unteragenten beendet</string>
     <string name="tool_listed_agents">Unteragenten aufgelistet</string>
     <string name="tool_stopped_agent">Unteragent gestoppt</string>
+    <string name="tool_delete_agent">Unteragent löschen</string>
+    <string name="tool_deleting_agent">Unteragent wird gelöscht…</string>
+    <string name="tool_deleted_agent">Unteragent gelöscht</string>
+    <string name="subagents_allow_delete">Löschen von Unteragenten erlauben</string>
+    <string name="subagents_allow_delete_desc">Der übergeordneten Unterhaltung erlauben, inaktive Unteragenten dauerhaft zu löschen, um Plätze freizugeben. Laufende Unteragenten und nicht zugestellte Ergebnisse werden nie gelöscht.</string>
+    <string name="subagent_deleted_by_parent">Dieser Unteragent wurde von seiner übergeordneten Unterhaltung gelöscht.</string>
     <string name="tool_todo_empty">Aufgabenliste ist leer</string>
     <string name="tool_agents_empty">Keine Unteragenten</string>
     <string name="tool_agent_results_empty">Keine Ergebnisse von Unteragenten zurückgegeben</string>

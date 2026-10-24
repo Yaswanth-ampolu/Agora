@@ -18,6 +18,7 @@ import com.newoether.agora.data.replaceCustomProviderIdsForDisplay
 
 import com.newoether.agora.data.repository.ConversationRepository
 import com.newoether.agora.data.repository.observeConversationTodo
+import com.newoether.agora.data.repository.observeDrawerGeneratingConversationIds
 import com.newoether.agora.data.repository.observeSubagents
 import com.newoether.agora.data.repository.observeParentConversationId
 import com.newoether.agora.data.repository.ConversationSettingsTransferCoordinator
@@ -457,15 +458,11 @@ class ChatViewModel(
     val generationSnapshot: StateFlow<ConversationGenerationSnapshot> =
         conversationUi.generationSnapshot
 
-    /** Every conversation currently mutating its message tree through foreground generation or
-     * headless Task/Loop execution. Drawer rows use this per-id set instead of the open
-     * conversation's open UI loading mirror. */
-    val generatingConversationIds: StateFlow<Set<String>> = combine(
-        generationRegistry.activeConversationIds,
-        conversationExecutionCoordinator.activeAutomationConversationIds,
-    ) { foreground, automation ->
-        foreground + automation
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+    /** Drawer activity includes each active conversation and the parent of any active Subagent. */
+    val generatingConversationIds: StateFlow<Set<String>> = convRepo.observeDrawerGeneratingConversationIds(
+        foregroundIds = generationRegistry.activeConversationIds,
+        automationIds = conversationExecutionCoordinator.activeAutomationConversationIds,
+    ).stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
     val isSwitching: StateFlow<Boolean> get() = selectionController.isSwitching
 
@@ -518,6 +515,8 @@ class ChatViewModel(
 
     internal val conversationContextProjection: StateFlow<ConversationContextProjection>
         get() = contextProjector.projection
+    internal val conversationContextInvalidationRevision: StateFlow<Long>
+        get() = contextProjector.invalidationRevision
 
     internal fun requestConversationContext(
         conversationId: String?,

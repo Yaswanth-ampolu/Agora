@@ -872,6 +872,12 @@
     <string name="tool_waited_agents">Ожидание субагентов завершено</string>
     <string name="tool_listed_agents">Список субагентов получен</string>
     <string name="tool_stopped_agent">Субагент остановлен</string>
+    <string name="tool_delete_agent">Удалить субагента</string>
+    <string name="tool_deleting_agent">Удаление субагента…</string>
+    <string name="tool_deleted_agent">Субагент удалён</string>
+    <string name="subagents_allow_delete">Разрешить удаление субагентов</string>
+    <string name="subagents_allow_delete_desc">Разрешить родительской беседе безвозвратно удалять неактивных субагентов, чтобы освободить места. Работающие субагенты и недоставленные результаты никогда не удаляются.</string>
+    <string name="subagent_deleted_by_parent">Этот субагент был удалён родительской беседой.</string>
     <string name="tool_todo_empty">Список задач пуст</string>
     <string name="tool_agents_empty">Нет субагентов</string>
     <string name="tool_agent_results_empty">Результаты субагентов не получены</string>

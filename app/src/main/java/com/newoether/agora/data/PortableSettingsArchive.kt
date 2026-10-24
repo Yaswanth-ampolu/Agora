@@ -124,6 +124,7 @@ internal object PortableSettingsArchive {
         put("askUserTimeoutMinutes", JsonPrimitive(sm.askUserTimeoutMinutes.first()))
         put("todoEnabled", JsonPrimitive(sm.todoEnabled.first()))
         put("subagentToolsEnabled", JsonPrimitive(sm.subagentToolsEnabled.first()))
+        put("subagentDeleteEnabled", JsonPrimitive(sm.subagentDeleteEnabled.first()))
         val subagentMaxTotal = sm.subagentMaxTotal.first()
         put("subagentMaxTotal", JsonPrimitive(subagentMaxTotal))
         put(
@@ -423,6 +424,7 @@ internal object PortableSettingsArchive {
         obj.int("askUserTimeoutMinutes")?.let { sm.saveAskUserTimeoutMinutes(it) }
         obj.boolean("todoEnabled")?.let { sm.saveTodoEnabled(it) }
         obj.boolean("subagentToolsEnabled")?.let { sm.saveSubagentToolsEnabled(it) }
+        obj.boolean("subagentDeleteEnabled")?.let { sm.saveSubagentDeleteEnabled(it) }
         val subagentMaxTotal = obj.int("subagentMaxTotal")
         val subagentMaxConcurrent = obj.int("subagentMaxConcurrent")
         if (subagentMaxTotal != null || subagentMaxConcurrent != null) {

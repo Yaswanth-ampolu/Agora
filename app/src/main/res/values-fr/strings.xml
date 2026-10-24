@@ -872,6 +872,12 @@
     <string name="tool_waited_agents">Attente des sous-agents terminée</string>
     <string name="tool_listed_agents">Liste des sous-agents récupérée</string>
     <string name="tool_stopped_agent">Sous-agent arrêté</string>
+    <string name="tool_delete_agent">Supprimer le sous-agent</string>
+    <string name="tool_deleting_agent">Suppression du sous-agent…</string>
+    <string name="tool_deleted_agent">Sous-agent supprimé</string>
+    <string name="subagents_allow_delete">Autoriser la suppression des sous-agents</string>
+    <string name="subagents_allow_delete_desc">Permet à la conversation parente de supprimer définitivement ses sous-agents inactifs pour libérer des places. Les sous-agents en cours et les résultats non livrés ne sont jamais supprimés.</string>
+    <string name="subagent_deleted_by_parent">Ce sous-agent a été supprimé par sa conversation parente.</string>
     <string name="tool_todo_empty">La liste de tâches est vide</string>
     <string name="tool_agents_empty">Aucun sous-agent</string>
     <string name="tool_agent_results_empty">Aucun résultat de sous-agent renvoyé</string>

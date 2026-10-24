@@ -119,7 +119,7 @@ class ChatRuntime(
     )
 
     private val subagentMessageQueue = SubagentMessageQueue(
-        conversations, registry,
+        conversations, registry, executionCoordinator,
         prepareSnapshot = { id, run, model -> requestBuilder.captureAdmissionSnapshot(id, run, model) },
     )
 
@@ -167,7 +167,11 @@ class ChatRuntime(
         removeRuntime = registry::remove,
         stopGeneration = { conversationId, origin -> generationStop.stopAndAwait(conversationId, origin) },
         deletedElsewhereText = { appContext.getString(R.string.conversation_deleted_elsewhere) },
+        deletedByParentText = { appContext.getString(R.string.subagent_deleted_by_parent) },
     )
+
+    internal suspend fun deleteIdleSubagent(id: String, parentId: String): Boolean =
+        conversationLifecycle.deleteIdleSubagent(id, parentId)
 
     internal val conversationForkShare = ConversationForkShareController(
         service = ConversationForkShareService(

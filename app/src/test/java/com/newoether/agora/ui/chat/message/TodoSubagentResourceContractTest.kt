@@ -78,6 +78,51 @@ class TodoSubagentResourceContractTest {
         }
     }
 
+    @Test
+    fun subagentCountPluralsAreLocalizedWithLocaleQuantitiesAndOneCountPlaceholder() {
+        val root = locateResources()
+        val resources = directories.associateWith { directory ->
+            buildMap<String, Map<String, String>> {
+                File(root, directory).listFiles().orEmpty().filter { it.extension == "xml" }.forEach { file ->
+                    val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
+                    val nodes = document.getElementsByTagName("plurals")
+                    repeat(nodes.length) { index ->
+                        val plural = nodes.item(index) as org.w3c.dom.Element
+                        val name = plural.getAttribute("name")
+                        assertFalse("$directory duplicate plural $name", containsKey(name))
+                        val items = plural.getElementsByTagName("item")
+                        put(name, buildMap {
+                            repeat(items.length) { itemIndex ->
+                                val item = items.item(itemIndex) as org.w3c.dom.Element
+                                val quantity = item.getAttribute("quantity")
+                                assertFalse("$directory $name duplicate $quantity", containsKey(quantity))
+                                put(quantity, item.textContent)
+                            }
+                        })
+                    }
+                }
+            }
+        }
+        val defaults = resources.getValue("values")
+        resources.forEach { (directory, plurals) ->
+            assertEquals("$directory merged plural key parity", defaults.keys, plurals.keys)
+            val total = plurals.getValue("subagents_count")
+            val running = plurals.getValue("subagents_running_count")
+            assertEquals("$directory count quantities", total.keys, running.keys)
+            assertTrue("$directory other quantity", "other" in running)
+            running.forEach { (quantity, value) ->
+                assertEquals("$directory $quantity count placeholder", 1, Regex("%d").findAll(value).count())
+                if (directory != "values") assertNotEquals("$directory English fallback", "%d Running", value)
+            }
+        }
+        assertEquals(mapOf("one" to "%d Running", "other" to "%d Running"),
+            defaults.getValue("subagents_running_count"))
+        assertEquals(mapOf("one" to "%d Subagent", "other" to "%d Subagents"),
+            defaults.getValue("subagents_count"))
+        assertEquals("%d 个运行中", resources.getValue("values-zh").getValue("subagents_running_count")["other"])
+        assertEquals("%d 個執行中", resources.getValue("values-zh-rTW").getValue("subagents_running_count")["other"])
+    }
+
     private fun readStrings(directory: File): Map<String, String> = buildMap {
         directory.listFiles().orEmpty().filter { it.extension == "xml" }.forEach { file ->
             val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)

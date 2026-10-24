@@ -202,6 +202,7 @@ class SettingsManager(private val context: Context) {
     val askUserTimeoutMinutes: Flow<Int> = context.dataStore.data.map { normalizeAskUserTimeoutMinutes(it[ASK_USER_TIMEOUT_MINUTES]) }
     val todoEnabled: Flow<Boolean> = context.dataStore.data.map { it[TODO_ENABLED] ?: true }
     val subagentToolsEnabled: Flow<Boolean> = context.dataStore.data.map { it[SUBAGENT_TOOLS_ENABLED] ?: true }
+    val subagentDeleteEnabled: Flow<Boolean> = context.dataStore.data.map { it[SUBAGENT_DELETE_ENABLED] ?: false }
     val subagentMaxTotal: Flow<Int> = context.dataStore.data.map { normalizeSubagentMaxTotal(it[SUBAGENT_MAX_TOTAL]) }
     val subagentMaxConcurrent: Flow<Int> = context.dataStore.data.map {
         normalizeSubagentMaxConcurrent(it[SUBAGENT_MAX_CONCURRENT], normalizeSubagentMaxTotal(it[SUBAGENT_MAX_TOTAL]))
@@ -680,6 +681,7 @@ class SettingsManager(private val context: Context) {
     suspend fun saveSubagentToolsEnabled(enabled: Boolean) {
         context.dataStore.edit { it[SUBAGENT_TOOLS_ENABLED] = enabled }
     }
+    suspend fun saveSubagentDeleteEnabled(enabled: Boolean) { context.dataStore.edit { it[SUBAGENT_DELETE_ENABLED] = enabled } }
     suspend fun saveShellDevices(devices: List<ShellDeviceConfig>) {
         context.dataStore.edit { it[SHELL_DEVICES_JSON] = encryptShellDevices(devices, json) }
     }

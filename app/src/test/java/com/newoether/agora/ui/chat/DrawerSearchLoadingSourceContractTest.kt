@@ -11,14 +11,13 @@ class DrawerSearchLoadingSourceContractTest {
     fun `keyword search uses a single SQLite LIKE escape character`() {
         val dao = source("data/local/ChatSearchDao.kt")
         val repository = source("data/repository/ConversationMessageSearch.kt")
-        val globalSearchQuery = dao
-            .substringBefore("suspend fun searchMessages")
-            .substringAfterLast("@Query(")
-        val kotlinEncodedSingleBackslashEscape = """ESCAPE '\\'"""
-        val kotlinEncodedDoubleBackslashEscape = """ESCAPE '\\\\'"""
+        val globalSearchQuery = dao.substringAfter("KEYWORD_MESSAGE_PROJECTION = \"\"\"")
+            .substringBefore("\"\"\"")
+        val singleBackslashEscape = """ESCAPE '\'"""
+        val doubleBackslashEscape = """ESCAPE '\\'"""
 
-        assertEquals(2, globalSearchQuery.count(kotlinEncodedSingleBackslashEscape))
-        assertFalse(globalSearchQuery.contains(kotlinEncodedDoubleBackslashEscape))
+        assertEquals(2, globalSearchQuery.count(singleBackslashEscape))
+        assertFalse(globalSearchQuery.contains(doubleBackslashEscape))
         assertTrue(
             repository.contains(
                 """query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")""",

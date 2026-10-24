@@ -166,7 +166,8 @@ fun ChatApp(
         ),
     )
     val contextProjection by viewModel.conversationContextProjection.collectAsState()
-    LaunchedEffect(currentConversationId, currentConversation?.selectedBranchesJson, selectedModel, conversationControls.contextWindow, allMessagesState.value, contextProjectionKey) {
+    val contextInvalidationRevision by viewModel.conversationContextInvalidationRevision.collectAsState()
+    LaunchedEffect(currentConversationId, currentConversation?.selectedBranchesJson, selectedModel, conversationControls.contextWindow, allMessagesState.value, contextProjectionKey, contextInvalidationRevision) {
         viewModel.requestConversationContext(currentConversationId, currentConversation?.selectedBranchesJson, selectedModel, conversationControls.contextWindow)
     }
     val contextProjectionReady = contextProjection.completed && !contextProjection.loading && !contextProjection.failed && contextProjection.conversationId == currentConversationId && contextProjection.selectedBranchesJson == currentConversation?.selectedBranchesJson

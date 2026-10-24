@@ -28,7 +28,6 @@ import com.newoether.agora.model.OpenAiServiceTiers
 import com.newoether.agora.model.apiModelName
 import com.newoether.agora.util.Constants
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
@@ -556,6 +555,7 @@ class GenerationRequestBuilder(
             conversationId = currentId,
             todoEnabled = settings.todoEnabled.value,
             subagentToolsEnabled = settings.subagentToolsEnabled.value,
+            subagentDeleteEnabled = settings.subagentDeleteEnabled.value,
             enabledModelIds = enabledModelIds.sorted(),
             subagentModelIds = subagentModelIds,
             subagentRecommendedModel = settings.subagentRecommendedModel.value
@@ -663,6 +663,8 @@ class GenerationRequestBuilder(
         // stored active memory so turning the tools off cannot erase context. It is frozen here,
         // once per Run, rather than re-read on every Provider pass.
         val activeMemory = withContext(Dispatchers.IO) { memoryManager.getActiveMemory() }
+        // The skill catalog is frozen with it, once per Run.
+        val skillCatalog = if (settings.accessSkills.value) skillManager.catalog() else ""
         GenerationPromptTemplate(
             systemItems = entry?.resolvedSystemItems?.toList().orEmpty(),
             userItems = entry?.resolvedUserItems?.toList()
@@ -670,6 +672,7 @@ class GenerationRequestBuilder(
             assistantItems = entry?.resolvedAssistantItems?.toList()
                 ?: PredefinedVariables.normalizeMessageTemplate(emptyList()),
             activeMemory = activeMemory,
+            skillCatalog = skillCatalog,
         )
     }
 
@@ -709,10 +712,6 @@ class GenerationRequestBuilder(
         activeModel: String,
     ): ResolvedPrompt = withContext(Dispatchers.Default) {
         coroutineScope {
-            val includeSkillCatalog = settings.accessSkills.value
-            val skillCatalogDeferred = async {
-                if (includeSkillCatalog) skillManager.catalog() else ""
-            }
             val modelId = ModelId.parse(
                 providerRegistry.canonicalModelId(activeModel),
             ).modelName
@@ -720,9 +719,7 @@ class GenerationRequestBuilder(
                 now = java.util.Date(),
                 modelId = modelId,
                 activeMemory = promptTemplate.activeMemory,
-                skillCatalog = skillCatalogDeferred.await()
-                    .takeIf { includeSkillCatalog }
-                    .orEmpty(),
+                skillCatalog = promptTemplate.skillCatalog,
             )
             val perMessageValues = runtimeValues.filterKeys {
                 it !in PredefinedVariables.PER_MESSAGE_VARS
