@@ -41,26 +41,6 @@ internal class GenerationContextAccounting(
                 com.newoether.agora.api.openai.isDeepSeekModel(config.modelId)) &&
             !config.lowContextModeEnabled && definitions(config, context).isNotEmpty()
 
-    suspend fun resolveContextPrompt(
-        config: GenerationConfig,
-        context: GenerationContext,
-    ): GenerationConfig {
-        val template = config.promptTemplate ?: return config
-        if (config.lowContextModeEnabled) return config
-        val resolved = resolveGenerationPromptTemplate(
-            promptTemplate = template,
-            modelId = config.modelId,
-            toolNames = definitions(config, context).mapTo(linkedSetOf()) { it.function.name },
-        )
-        return config.copy(
-            effectiveSystemPrompt = resolved.systemPrompt,
-            userPrepend = resolved.userPrepend,
-            userPostpend = resolved.userPostpend,
-            assistantPrepend = resolved.assistantPrepend,
-            assistantPostpend = resolved.assistantPostpend,
-        )
-    }
-
     suspend fun resolvedFixedContextTokenCost(
         config: GenerationConfig,
         context: GenerationContext,

@@ -466,14 +466,15 @@ in the existing editor. Source links retain the established external-link icon a
   Filename and content `generatedAtMillis` derive from the same export instant.
   Existing format identifiers, extensions, MIME types and capture content remain unchanged.
 
-## System Prompt guide variables
-- The existing explicit-save System Prompt editor exposes all seven `tool_guide_*` variables in
-  its variable picker and selected-item rows, with localized display names in every locale. The
-  picker keeps the established sheet title, SettingsItem rows and spacing, and scrolls the variable
-  list within available height. Selection edits the draft only; Save and unsaved Back behavior stay
-  unchanged. Preview values are examples and are never written as resolved text.
-- Default template copy describes response rules and per-request enabled-tool guidance. The exact
-  template text, guide membership, ordering, migration and runtime ownership are defined by
+## System Prompt templates
+- The explicit-save editor offers only the ordinary context variables. Tool guidance is static text
+  in the Default template, with no per-tool guide cards or example values. Retired saved variables
+  remain removable rows with the existing localized Unknown label and technical key underneath;
+  preview compilation contributes no text for them. Opening or leaving the editor never deletes
+  or rewrites those saved items. Save and unsaved Back behavior stay unchanged.
+- The existing variable picker keeps its title, SettingsItem rows, spacing and scroll behavior.
+  Selection changes the draft only. Default copy describes response rules, tool guidance, the Skill
+  catalog and Active Memory. Exact template ordering, migration and ownership follow
   message-generation.md 9.2.
 
 ## Copy and localization

@@ -84,14 +84,7 @@
     <string name="prompts_template_blank">فارغ</string>
     <string name="prompts_template_blank_desc">ابدأ بموجّه نظام فارغ قابل للتحرير.</string>
     <string name="prompts_template_default">افتراضي</string>
-    <string name="template_variable_tool_guide_memory">إرشادات أدوات الذاكرة</string>
-    <string name="template_variable_tool_guide_skills">إرشادات أدوات المهارات</string>
-    <string name="template_variable_tool_guide_past_conversations">إرشادات المحادثات السابقة</string>
-    <string name="template_variable_tool_guide_web">إرشادات أدوات الويب</string>
-    <string name="template_variable_tool_guide_devices">إرشادات أدوات الأجهزة</string>
-    <string name="template_variable_tool_guide_subagents_and_automation">إرشادات الوكلاء الفرعيين والأتمتة</string>
-    <string name="template_variable_tool_guide_asking_the_user">إرشادات سؤال المستخدم</string>
-    <string name="prompts_template_default_desc">استخدم قواعد الرد الافتراضية في Agora وإرشادات الأدوات المفعّلة في كل طلب.</string>
+    <string name="prompts_template_default_desc">استخدم قواعد الرد الافتراضية في Agora وإرشادات الأدوات وكتالوج المهارات والذاكرة النشطة.</string>
     <string name="prompts_duplicate">تكرار</string>
     <string name="prompts_duplicate_title">نسخة من %1$s</string>
     <string name="prompts_empty_preview">موجّه فارغ</string>

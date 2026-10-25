@@ -12,11 +12,11 @@ User 与 Assistant 各自包含且仅包含一个结构化 `Prompt` 项。它代
 
 上下文变量包括 `{time}`、`{date}`、`{sent_time}`、`{sent_date}`、`{active_memory}`、`{skill_catalog}`、`{current_model_id}` 与 `{message_model_id}`。`{current_model_id}` 表示本次请求选择的模型；`{message_model_id}` 按普通历史消息逐条解析为创建该消息的模型，没有模型身份时为空。旧 `{model_id}` 仍可读取，并等价于 `{current_model_id}`，但不再提供给新模板插入。
 
-另有七个工具指南变量：`{tool_guide_memory}`、`{tool_guide_skills}`、`{tool_guide_past_conversations}`、`{tool_guide_web}`、`{tool_guide_devices}`、`{tool_guide_subagents_and_automation}` 与 `{tool_guide_asking_the_user}`。每个变量仅在实际请求包含对应组的工具时返回指南，否则返回空串。同一启用工具集合产生完全一致的指南正文。
+旧工具指南变量不再提供插入。自定义模板中若仍有残留，编辑器会显示为可删除的“未知”变量项，预览和实际请求都输出空串。打开编辑器不会改写已保存模板。
 
 变量在每次 Provider 请求实际出站前解析，包括初始请求、工具续轮与传输重试。`{active_memory}` 和 `{skill_catalog}` 在一轮回复开始时读取一次，该轮所有请求保持不变，以稳定提示缓存。回复过程中的修改在下一轮进入提示词；当前活跃记忆可通过 `active_memory_read` 读取。编辑器预览只使用示例值，不会冻结后续请求的变量值。
 
-普通生成的 system prompt 完全由所选结构化 System 模板定义。Agora 不会隐式追加记忆、技能、运行时元数据、工具指南或其他隐藏文本。默认模板先放 Response 和 Tools，再依次放条件工具指南、技能目录，最后放活跃记忆。权限设置控制工具是否可用；删除模板变量就会移除对应内容。
+普通生成的 system prompt 完全由所选结构化 System 模板定义。Agora 不会隐式追加记忆、技能、运行时元数据、工具指南或其他隐藏文本。默认模板以一个可编辑文本项开始，依次包含 Response、Tools、Memory、Skills、Past conversations、Web、Devices、Subagents and automation 和 Asking the user。这些段落不随工具启用情况裁剪；之后是技能目录，最后是活跃记忆。权限设置控制工具是否可用；删除模板变量就会移除对应内容。
 
 User 与 Assistant 模板只应用于普通对话消息。工具消息、上下文压缩、标题生成和其他特殊生成路径继续使用各自的专用格式。编辑器只在点击保存时写入；离开有修改的编辑器会询问是否丢弃草稿。
 

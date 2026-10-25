@@ -10,6 +10,27 @@ import org.w3c.dom.Element
 
 class SettingsResourceContractTest {
     @Test
+    fun retiredPromptGuideLabelsAreAbsentAndUnknownRowsKeepTheExistingFallback() {
+        val resources = locateResourceDirectory()
+        val localePattern = Regex("""values(?:-[a-z]{2,3}(?:-r[A-Z]{2})?)?""")
+        val locales = resources.listFiles().orEmpty().filter {
+            it.isDirectory && localePattern.matches(it.name)
+        }
+        assertEquals(12, locales.size)
+        locales.forEach { locale ->
+            val values = readStringValues(locale)
+            assertFalse(locale.name, values.keys.any { it.startsWith("template_variable_tool_guide_") })
+            assertTrue(locale.name, !values["unknown"].isNullOrBlank())
+            assertTrue(locale.name, !values["prompts_template_default_desc"].isNullOrBlank())
+        }
+        val editor = readSettingsSource("SystemPromptEditorPage.kt")
+        assertFalse(editor.contains("TOOL_GUIDE_"))
+        assertTrue(editor.contains("else -> stringResource(R.string.unknown)"))
+        assertTrue(editor.contains("onDelete = if (isPrompt) null"))
+        assertTrue(editor.contains("PredefinedVariables.EXAMPLE_VALUES"))
+    }
+
+    @Test
     fun anthropicCacheControlsFollowProviderScopeAndAppearanceInteractions() {
         val detail = readSettingsSource("SettingsProviderDetailPage.kt")
         val gate = "if (supportsPromptCacheSetting(currentName, customProviders))"

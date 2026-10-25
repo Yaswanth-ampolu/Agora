@@ -84,14 +84,7 @@
     <string name="prompts_template_blank">빈 항목</string>
     <string name="prompts_template_blank_desc">비어 있는 편집 가능한 시스템 프롬프트로 시작합니다.</string>
     <string name="prompts_template_default">기본</string>
-    <string name="template_variable_tool_guide_memory">메모리 도구 안내</string>
-    <string name="template_variable_tool_guide_skills">스킬 도구 안내</string>
-    <string name="template_variable_tool_guide_past_conversations">이전 대화 안내</string>
-    <string name="template_variable_tool_guide_web">웹 도구 안내</string>
-    <string name="template_variable_tool_guide_devices">기기 도구 안내</string>
-    <string name="template_variable_tool_guide_subagents_and_automation">하위 에이전트 및 자동화 안내</string>
-    <string name="template_variable_tool_guide_asking_the_user">사용자 질문 안내</string>
-    <string name="prompts_template_default_desc">Agora 기본 응답 규칙과 각 요청에서 활성화된 도구의 안내를 사용합니다.</string>
+    <string name="prompts_template_default_desc">Agora 기본 응답 규칙, 도구 안내, 스킬 카탈로그 및 활성 메모리를 사용합니다.</string>
     <string name="prompts_duplicate">복제</string>
     <string name="prompts_duplicate_title">%1$s 사본</string>
     <string name="prompts_empty_preview">빈 프롬프트</string>

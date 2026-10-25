@@ -61,6 +61,7 @@ class SystemPromptMigrationTest {
             DefaultSystemPrompt.versionBeforeMathRuleForMigration(Locale.ENGLISH),
             DefaultSystemPrompt.versionBeforeToolRenameForMigration(Locale.ENGLISH),
             DefaultSystemPrompt.versionBeforeToolGuidesForMigration(Locale.ENGLISH),
+            DefaultSystemPrompt.versionWithToolGuidesForMigration(Locale.ENGLISH),
         )
         val current = DefaultSystemPrompt.create(Locale.ENGLISH)
         versions.forEachIndexed { index, original ->

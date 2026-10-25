@@ -84,14 +84,7 @@
     <string name="prompts_template_blank">Leer</string>
     <string name="prompts_template_blank_desc">Mit einem leeren, bearbeitbaren System-Prompt beginnen.</string>
     <string name="prompts_template_default">Standard</string>
-    <string name="template_variable_tool_guide_memory">Hinweise zu Speicherwerkzeugen</string>
-    <string name="template_variable_tool_guide_skills">Hinweise zu Skill-Werkzeugen</string>
-    <string name="template_variable_tool_guide_past_conversations">Hinweise zu früheren Gesprächen</string>
-    <string name="template_variable_tool_guide_web">Hinweise zu Webwerkzeugen</string>
-    <string name="template_variable_tool_guide_devices">Hinweise zu Gerätewerkzeugen</string>
-    <string name="template_variable_tool_guide_subagents_and_automation">Hinweise zu Unteragenten und Automatisierung</string>
-    <string name="template_variable_tool_guide_asking_the_user">Hinweise zu Benutzerfragen</string>
-    <string name="prompts_template_default_desc">Agoras Standardregeln für Antworten und Hinweise zu den im jeweiligen Request aktivierten Werkzeugen verwenden.</string>
+    <string name="prompts_template_default_desc">Agoras Standardregeln für Antworten, Werkzeughinweise, Skill-Katalog und aktiven Speicher verwenden.</string>
     <string name="prompts_duplicate">Duplizieren</string>
     <string name="prompts_duplicate_title">%1$s Kopie</string>
     <string name="prompts_empty_preview">Leerer Prompt</string>

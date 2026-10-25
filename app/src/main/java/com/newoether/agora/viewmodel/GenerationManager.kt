@@ -116,9 +116,6 @@ class GenerationManager(
     internal fun includesAssistantReasoning(config: GenerationConfig, context: GenerationContext): Boolean =
         contextAccounting.includesAssistantReasoning(config, context)
 
-    internal suspend fun resolveContextPrompt(config: GenerationConfig, context: GenerationContext): GenerationConfig =
-        contextAccounting.resolveContextPrompt(config, context)
-
     internal suspend fun resolvedFixedContextTokenCost(config: GenerationConfig, context: GenerationContext): Int =
         contextAccounting.resolvedFixedContextTokenCost(config, context)
 

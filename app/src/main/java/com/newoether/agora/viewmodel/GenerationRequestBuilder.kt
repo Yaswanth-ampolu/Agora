@@ -654,10 +654,7 @@ class GenerationRequestBuilder(
         promptTemplate: GenerationPromptTemplate,
         activeModel: String,
     ): ProviderRequestResolver = ProviderRequestResolver { messages, providerConfig ->
-        val resolved = resolvePromptTemplate(
-            promptTemplate, activeModel,
-            providerConfig.tools.orEmpty().mapTo(linkedSetOf()) { it.function.name },
-        )
+        val resolved = resolvePromptTemplate(promptTemplate, activeModel)
         // One cost model per request: the fixed cost, the trimming and the indicator must agree.
         val costs = ContextCostModels.forModel(providerConfig.modelId)
         val fixedTokenCost = CostModelContextEstimator(costs).estimateFixed(
@@ -687,10 +684,8 @@ class GenerationRequestBuilder(
     private suspend fun resolvePromptTemplate(
         promptTemplate: GenerationPromptTemplate,
         activeModel: String,
-        toolNames: Set<String> = emptySet(),
     ): ResolvedPrompt = resolveGenerationPromptTemplate(
         promptTemplate = promptTemplate,
         modelId = providerRegistry.canonicalModelId(activeModel),
-        toolNames = toolNames,
     )
 }

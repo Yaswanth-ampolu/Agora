@@ -122,10 +122,6 @@ internal class ConversationContextProjector(
                 } catch (_: Exception) {
                     null
                 }
-            }?.let { captured ->
-                if (captured.config.promptTemplate == null) captured else captured.copy(
-                    config = generationManager().resolveContextPrompt(captured.config, captured.context),
-                )
             }
             val durableProviderMessages = conversationId?.let {
                 contextLoader.load(

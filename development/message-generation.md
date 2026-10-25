@@ -824,23 +824,22 @@ Memory or Skill access may make the corresponding predefined variable resolvable
 authorized tools, but content enters the ordinary system prompt only where the user placed that
 variable. Removing a variable from the template must remove that content from the dispatched system
 prompt without a construction-layer fallback.
-The shipped default begins with fixed Response and Tools text, followed in order by explicit
-`{tool_guide_memory}`, `{tool_guide_skills}`, `{tool_guide_past_conversations}`, `{tool_guide_web}`,
-`{tool_guide_devices}`, `{tool_guide_subagents_and_automation}`, and `{tool_guide_asking_the_user}`
-variables, then the Skill catalog block and finally Active Memory. Each guide resolves to its stable
-English section only when at least one tool in that group is present in the actual request's function
-definitions; otherwise it resolves to the empty string, including its separator. Settings alone and
-external tools with similar names do not enable guides. Unrelated tools and definition order do not
-change section text. Compact's tool-disabled request resolves all guides to empty. Guide text is never
-injected outside explicit variables, and custom template whitespace remains verbatim.
-`ToolPromptGuides` owns section text and exact tool membership. `GenerationPromptRendering` compiles
-both request and preview values without changing stored items. `GenerationContextAccounting` uses
-the same tool-definition source as dispatch and resolves preview prompts before wrapper projection
-and fixed-cost/composition accounting. The request resolver consumes `ProviderConfig.tools` and uses
-one compiled prompt instance for rollout cost and wire output. The editor exposes every guide with
-localized labels and explicit preview values. Startup recognizes the exact post-tool-rename default
-as well as every older known default; any changed system text or User/Assistant wrapper prevents
-replacement. The historical math rule remains intact when reconstructing old versions.
+The shipped default begins with one custom text item containing Response, Tools, Memory, Skills,
+Past conversations, Web, Devices, Subagents and automation, and Asking the user in that order.
+These sections are static, including when their tools are disabled or Compact preserves the ordinary
+system prompt. The explicit Skill catalog block follows, then Active Memory with their existing
+variables and surrounding text. Tool availability never trims these sections or injects them into
+custom templates. Custom text and whitespace remain verbatim.
+`GenerationPromptRendering` compiles request and preview values without changing stored items.
+`GenerationContextAccounting` uses the dispatch tool-definition source for fixed cost/composition
+and Compact accounting. Preview compilation occurs once in its captured snapshot; it does not need
+another tool-dependent rendering pass. The request resolver uses one compiled prompt instance for
+rollout cost and wire output. Startup recognizes the exact default that used conditional guide
+variables plus all four older known defaults. Any changed title, system text or User/Assistant
+wrapper prevents replacement. Retired predefined guide items in customized templates are retained
+as removable unknown variables and compile to empty in both previews and requests. They are absent
+from the picker and example values. Literal custom text is never stripped. Historical factories
+remain exact and independent of future default text changes.
 
 Every predefined variable in the structured System Prompt is late-bound for each actual outbound
 Provider API request. The stored template contains only ordered text and variable identities. Editing,

@@ -51,10 +51,10 @@ the next Run; it does not change later requests of the current Run or the Run-fr
 set.
 
 The default system prompt ends with the explicit `<skill_catalog>` block and then Active Memory.
-Its conditional `{tool_guide_skills}` section tells the model to treat catalog descriptions as data,
-read a relevant Skill through `skill_read` before following it, and never claim to know unread
-contents. The section is present only when this request includes Skill tools; an empty catalog states
-that no Skills are available. Custom prompt templates may place
+Its static Skills section tells the model to treat catalog descriptions as data, read a relevant
+Skill through `skill_read` before following it, and never claim to know unread contents. This text
+remains present regardless of tool availability; an empty catalog states that no Skills are
+available. Custom prompt templates may place
 `{skill_catalog}` in any explicit position. For ordinary generation, the catalog enters the system prompt only at
 an explicitly placed variable; the request builder must never append or restore it implicitly. Empty,
 disabled, or absent catalog projection resolves to an empty string.

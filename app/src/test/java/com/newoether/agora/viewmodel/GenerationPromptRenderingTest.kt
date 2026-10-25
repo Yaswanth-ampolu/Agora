@@ -7,11 +7,10 @@ import com.newoether.agora.api.ToolParameters
 import com.newoether.agora.api.resolveRequest
 import com.newoether.agora.api.util.ContextTokenEstimator
 import com.newoether.agora.data.DefaultSystemPrompt
+import com.newoether.agora.data.PredefinedVariables
 import com.newoether.agora.data.PromptItemType
 import com.newoether.agora.data.PromptTemplateItem
 import com.newoether.agora.util.Constants
-import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,78 +21,76 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Locale
 
-class GenerationToolPromptGuidesTest {
+class GenerationPromptRenderingTest {
     @Test
-    fun actualRequestToolsControlGuidesOnInitialContinuationAndRetry() = runTest {
+    fun staticDefaultAndCapturedMemorySurviveToolChangesContinuationsAndRetries() = runTest {
         val fixture = fixture()
         val snapshot = fixture.builder.captureAdmissionSnapshot("conversation", "run", fixture.modelId)
         val config = ProviderConfig(
             apiKey = "key", modelId = "model", requestResolver = snapshot.config.requestResolver,
         )
-        val empty = config.resolveRequest(emptyList()).systemPrompt.orEmpty()
-        assertFalse(empty.contains("## Memory"))
-        assertFalse(empty.contains("## Web"))
-        assertTrue(empty.contains("<active_memory>\nactive memory\n</active_memory>"))
-        assertTrue(empty.contains("<skill_catalog>\nskill catalog\n</skill_catalog>"))
-        // Configured settings are all enabled, but only these definitions entered this request.
-        val webConfig = config.copy(tools = listOf(tool("web_search")))
-        val first = webConfig.resolveRequest(emptyList()).systemPrompt
-        assertTrue(first.orEmpty().contains("## Web"))
-        assertFalse(first.orEmpty().contains("## Devices"))
+        val first = config.resolveRequest(emptyList()).systemPrompt.orEmpty()
+        listOf("Memory", "Skills", "Past conversations", "Web", "Devices",
+            "Subagents and automation", "Asking the user").forEach {
+            assertTrue(first.contains("## $it"))
+        }
+        assertTrue(first.contains("<active_memory>\nactive memory\n</active_memory>"))
+        assertTrue(first.contains("<skill_catalog>\nskill catalog\n</skill_catalog>"))
         every { fixture.memoryManager.getActiveMemory() } returns "edited during run"
         every { fixture.skillManager.catalog() } returns "edited during run"
-        repeat(2) { assertEquals(first, webConfig.resolveRequest(emptyList()).systemPrompt) }
-        val memory = config.copy(tools = listOf(tool("active_memory_update")))
-            .resolveRequest(emptyList()).systemPrompt.orEmpty()
-        assertTrue(memory.contains("## Memory"))
-        assertFalse(memory.contains("## Web"))
-        assertTrue(memory.contains("active memory"))
-        assertFalse(memory.contains("edited during run"))
+        listOf(emptyList(), listOf(tool("web_search")), listOf(tool("active_memory_update"))).forEach {
+            repeat(3) { _ ->
+                assertEquals(first, config.copy(tools = it).resolveRequest(emptyList()).systemPrompt)
+            }
+        }
+        assertFalse(first.contains("edited during run"))
     }
 
     @Test
-    fun previewAndDispatchUseIdenticalPromptAndFixedCostForTheSameToolDefinitions() = runTest {
+    fun previewAndDispatchUseIdenticalPromptAndFixedCostWithOrWithoutTools() = runTest {
         val fixture = fixture()
         val snapshot = fixture.builder.captureAdmissionSnapshot("conversation", "run", fixture.modelId)
         val preview = fixture.builder.captureContextProjectionSnapshot("conversation", fixture.modelId)
         val tools = listOf(tool("memory_read"), tool("skill_read"), tool("file_read"), tool("ask_user"))
         val accounting = GenerationContextAccounting { tools }
-        val previewConfig = accounting.resolveContextPrompt(preview.config, preview.context)
         val dispatched = ProviderConfig(
             apiKey = "key", modelId = "model", tools = tools,
             requestResolver = snapshot.config.requestResolver,
         ).resolveRequest(emptyList())
-        assertEquals(dispatched.systemPrompt, previewConfig.effectiveSystemPrompt)
+        assertEquals(dispatched.systemPrompt, preview.config.effectiveSystemPrompt)
         assertEquals(
             ContextTokenEstimator.forModel("model").estimateFixed(
                 systemPrompt = dispatched.systemPrompt,
                 tools = tools,
-                codeExecutionEnabled = previewConfig.codeExecutionEnabled,
-                googleSearchEnabled = previewConfig.googleSearchEnabled,
-                openAiWebSearchEnabled = previewConfig.openAiWebSearchEnabled,
+                codeExecutionEnabled = preview.config.codeExecutionEnabled,
+                googleSearchEnabled = preview.config.googleSearchEnabled,
+                openAiWebSearchEnabled = preview.config.openAiWebSearchEnabled,
             ),
-            accounting.fixedContextTokenCost(previewConfig, preview.context),
+            accounting.fixedContextTokenCost(preview.config, preview.context),
         )
         assertEquals(
-            accounting.fixedContextTokenCost(previewConfig, preview.context),
+            accounting.fixedContextTokenCost(preview.config, preview.context),
             accounting.resolvedFixedContextTokenCost(snapshot.config, snapshot.context),
         )
+        val noTools = ProviderConfig(
+            apiKey = "key", modelId = "model", requestResolver = snapshot.config.requestResolver,
+        ).resolveRequest(emptyList())
+        assertEquals(dispatched.systemPrompt, noTools.systemPrompt)
         val emptyAccounting = GenerationContextAccounting { emptyList() }
-        val disabled = emptyAccounting.resolveContextPrompt(preview.config, preview.context)
-        assertFalse(disabled.effectiveSystemPrompt.orEmpty().contains("## Memory"))
-        assertTrue(accounting.fixedContextTokenCost(previewConfig, preview.context) >
-            emptyAccounting.fixedContextTokenCost(disabled, preview.context))
+        assertTrue(accounting.fixedContextTokenCost(preview.config, preview.context) >
+            emptyAccounting.fixedContextTokenCost(preview.config, preview.context))
+        assertEquals(
+            emptyAccounting.fixedContextTokenCost(preview.config, preview.context),
+            emptyAccounting.resolvedFixedContextTokenCost(snapshot.config, snapshot.context),
+        )
     }
 
     @Test
-    fun contextProjectorResolvesToolGuidesBeforePricingItsCapturedTemplate() = runTest {
+    fun contextProjectorPricesTheSharedCapturedStaticPrompt() = runTest {
         val fixture = fixture()
         val tools = listOf(tool("web_fetch"), tool("shell_exec"))
         val accounting = GenerationContextAccounting { tools }
         val manager = mockk<GenerationManager>()
-        coEvery { manager.resolveContextPrompt(any(), any()) } coAnswers {
-            accounting.resolveContextPrompt(firstArg(), secondArg())
-        }
         every { manager.fixedContextTokenCost(any(), any()) } answers {
             accounting.fixedContextTokenCost(firstArg(), secondArg())
         }
@@ -114,18 +111,14 @@ class GenerationToolPromptGuidesTest {
         val captured = fixture.builder.captureContextProjectionSnapshot(
             "context-preview-conversation", fixture.modelId, "prompt-id",
         )
-        val resolved = accounting.resolveContextPrompt(captured.config, captured.context)
-        assertTrue(resolved.effectiveSystemPrompt.orEmpty().contains("## Web"))
-        assertTrue(resolved.effectiveSystemPrompt.orEmpty().contains("## Devices"))
         assertEquals(
-            accounting.fixedContextTokenCost(resolved, captured.context),
+            accounting.fixedContextTokenCost(captured.config, captured.context),
             requireNotNull(projection.usage).estimatedTokenCount,
         )
-        coVerify(exactly = 1) { manager.resolveContextPrompt(any(), any()) }
     }
 
     @Test
-    fun toolsNeverInjectGuidanceOutsideAnExplicitTemplateVariable() = runTest {
+    fun toolsNeverInjectGuidanceIntoCustomText() = runTest {
         val fixture = fixture()
         val custom = "custom\n\n\nexact text"
         val entry = DefaultSystemPrompt.create(Locale.ENGLISH).copy(
@@ -142,14 +135,42 @@ class GenerationToolPromptGuidesTest {
     }
 
     @Test
-    fun preservedCompactHasNoToolGuidesAndKeepsTheOrdinaryPromptContent() = runTest {
+    fun retiredItemsAreEmptyInActualSystemAndMessageTemplatesAndPreview() = runTest {
+        val fixture = fixture()
+        val retired = DefaultSystemPrompt.versionWithToolGuidesForMigration(Locale.ENGLISH)
+            .systemItems.filter { it.value.startsWith("tool_guide_") }
+        val custom = DefaultSystemPrompt.create(Locale.ENGLISH).copy(
+            id = "prompt-id", title = "My custom prompt",
+            systemItems = retired,
+            userItems = retired + PredefinedVariables.promptItem(),
+            assistantItems = listOf(PredefinedVariables.promptItem()) + retired,
+        )
+        every { fixture.settings.systemPrompts } returns MutableStateFlow(listOf(custom))
+        val snapshot = fixture.builder.captureAdmissionSnapshot("conversation", "run", fixture.modelId)
+        val preview = fixture.builder.captureContextProjectionSnapshot("conversation", fixture.modelId)
+        val result = ProviderConfig(
+            apiKey = "key", modelId = "model", tools = listOf(tool("memory_read")),
+            requestResolver = snapshot.config.requestResolver,
+        ).resolveRequest(emptyList())
+        assertEquals(null, result.systemPrompt)
+        assertEquals(null, preview.config.effectiveSystemPrompt)
+        assertEquals(null, preview.config.userPrepend)
+        assertEquals(null, preview.config.assistantPostpend)
+        assertEquals(retired, snapshot.config.promptTemplate?.systemItems)
+    }
+
+    @Test
+    fun preservedCompactRetainsTheCompleteOrdinaryStaticPrompt() = runTest {
         val fixture = fixture(compactPreserveSystemPrompt = true)
         val snapshot = fixture.builder.captureAdmissionSnapshot("conversation", "run", fixture.modelId)
         val prompt = snapshot.automaticCompact.generationConfig.effectiveSystemPrompt.orEmpty()
-        assertTrue(prompt.contains("## Response"))
+        val ordinary = ProviderConfig(
+            apiKey = "key", modelId = "model", requestResolver = snapshot.config.requestResolver,
+        ).resolveRequest(emptyList()).systemPrompt
+        assertEquals(ordinary, prompt)
+        assertTrue(prompt.contains("## Memory"))
+        assertTrue(prompt.contains("## Devices"))
         assertTrue(prompt.contains("<active_memory>\nactive memory\n</active_memory>"))
-        assertFalse(prompt.contains("## Memory"))
-        assertFalse(prompt.contains("## Devices"))
     }
 
     private fun fixture(compactPreserveSystemPrompt: Boolean = false): RequestBuilderFixture {

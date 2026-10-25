@@ -84,14 +84,7 @@
     <string name="prompts_template_blank">Vide</string>
     <string name="prompts_template_blank_desc">Commencer avec une instruction système modifiable vide.</string>
     <string name="prompts_template_default">Par défaut</string>
-    <string name="template_variable_tool_guide_memory">Consignes des outils de mémoire</string>
-    <string name="template_variable_tool_guide_skills">Consignes des outils de compétences</string>
-    <string name="template_variable_tool_guide_past_conversations">Consignes des conversations passées</string>
-    <string name="template_variable_tool_guide_web">Consignes des outils web</string>
-    <string name="template_variable_tool_guide_devices">Consignes des outils des appareils</string>
-    <string name="template_variable_tool_guide_subagents_and_automation">Consignes des sous-agents et de l’automatisation</string>
-    <string name="template_variable_tool_guide_asking_the_user">Consignes pour interroger l’utilisateur</string>
-    <string name="prompts_template_default_desc">Utiliser les règles de réponse par défaut d’Agora et les consignes des outils activés pour chaque requête.</string>
+    <string name="prompts_template_default_desc">Utiliser les règles de réponse par défaut d’Agora, les consignes des outils, le catalogue de compétences et la mémoire active.</string>
     <string name="prompts_duplicate">Dupliquer</string>
     <string name="prompts_duplicate_title">Copie de %1$s</string>
     <string name="prompts_empty_preview">Prompt vide</string>

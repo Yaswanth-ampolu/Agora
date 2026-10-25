@@ -84,14 +84,7 @@
     <string name="prompts_template_blank">Trống</string>
     <string name="prompts_template_blank_desc">Bắt đầu với một gợi ý hệ thống trống có thể chỉnh sửa.</string>
     <string name="prompts_template_default">Mặc định</string>
-    <string name="template_variable_tool_guide_memory">Hướng dẫn công cụ bộ nhớ</string>
-    <string name="template_variable_tool_guide_skills">Hướng dẫn công cụ kỹ năng</string>
-    <string name="template_variable_tool_guide_past_conversations">Hướng dẫn hội thoại trước đây</string>
-    <string name="template_variable_tool_guide_web">Hướng dẫn công cụ web</string>
-    <string name="template_variable_tool_guide_devices">Hướng dẫn công cụ thiết bị</string>
-    <string name="template_variable_tool_guide_subagents_and_automation">Hướng dẫn tác nhân phụ và tự động hóa</string>
-    <string name="template_variable_tool_guide_asking_the_user">Hướng dẫn hỏi người dùng</string>
-    <string name="prompts_template_default_desc">Dùng quy tắc trả lời mặc định của Agora và hướng dẫn cho các công cụ được bật trong mỗi yêu cầu.</string>
+    <string name="prompts_template_default_desc">Dùng quy tắc trả lời mặc định của Agora, hướng dẫn công cụ, danh mục kỹ năng và bộ nhớ đang hoạt động.</string>
     <string name="prompts_duplicate">Tạo bản sao</string>
     <string name="prompts_duplicate_title">Bản sao %1$s</string>
     <string name="prompts_empty_preview">Gợi ý trống</string>

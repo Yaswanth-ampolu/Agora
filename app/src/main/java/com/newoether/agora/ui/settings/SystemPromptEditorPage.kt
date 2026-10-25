@@ -69,15 +69,8 @@ private fun variableDisplayName(key: String): String = when (key) {
     PredefinedVariables.CURRENT_MODEL_ID -> "Current Model ID"
     PredefinedVariables.MESSAGE_MODEL_ID -> "Message Model ID"
     PredefinedVariables.MODEL_ID -> "Current Model ID (Legacy)"
-    PredefinedVariables.TOOL_GUIDE_MEMORY -> stringResource(R.string.template_variable_tool_guide_memory)
-    PredefinedVariables.TOOL_GUIDE_SKILLS -> stringResource(R.string.template_variable_tool_guide_skills)
-    PredefinedVariables.TOOL_GUIDE_PAST_CONVERSATIONS -> stringResource(R.string.template_variable_tool_guide_past_conversations)
-    PredefinedVariables.TOOL_GUIDE_WEB -> stringResource(R.string.template_variable_tool_guide_web)
-    PredefinedVariables.TOOL_GUIDE_DEVICES -> stringResource(R.string.template_variable_tool_guide_devices)
-    PredefinedVariables.TOOL_GUIDE_SUBAGENTS_AND_AUTOMATION -> stringResource(R.string.template_variable_tool_guide_subagents_and_automation)
-    PredefinedVariables.TOOL_GUIDE_ASKING_THE_USER -> stringResource(R.string.template_variable_tool_guide_asking_the_user)
     PredefinedVariables.PROMPT -> "Prompt"
-    else -> key
+    else -> stringResource(R.string.unknown)
 }
 
 private fun variableIcon(key: String): ImageVector = when (key) {

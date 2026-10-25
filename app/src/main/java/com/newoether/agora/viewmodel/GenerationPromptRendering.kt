@@ -2,7 +2,6 @@ package com.newoether.agora.viewmodel
 
 import com.newoether.agora.data.PredefinedVariables
 import com.newoether.agora.data.PromptTemplateItem
-import com.newoether.agora.data.ToolPromptGuides
 import com.newoether.agora.model.ModelId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -12,7 +11,6 @@ internal fun buildPromptRuntimeValues(
     modelId: String,
     activeMemory: String,
     skillCatalog: String,
-    toolNames: Set<String> = emptySet(),
 ): Map<String, String> {
     val timeFormat = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US)
     val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
@@ -30,21 +28,19 @@ internal fun buildPromptRuntimeValues(
         PredefinedVariables.MODEL_ID to modelId,
         PredefinedVariables.ACTIVE_MEMORY to activeMemory,
         PredefinedVariables.SKILL_CATALOG to skillCatalog,
-    ) + ToolPromptGuides.runtimeValues(toolNames)
+    )
 }
 
 /** Shared compilation for dispatch and context preview; never changes stored template items. */
 internal suspend fun resolveGenerationPromptTemplate(
     promptTemplate: GenerationPromptTemplate,
     modelId: String,
-    toolNames: Set<String> = emptySet(),
 ): GenerationRequestBuilder.ResolvedPrompt = withContext(Dispatchers.Default) {
     val runtimeValues = buildPromptRuntimeValues(
         now = java.util.Date(),
         modelId = ModelId.parse(modelId).modelName,
         activeMemory = promptTemplate.activeMemory,
         skillCatalog = promptTemplate.skillCatalog,
-        toolNames = toolNames,
     )
     val perMessageValues = runtimeValues.filterKeys {
         it !in PredefinedVariables.PER_MESSAGE_VARS
