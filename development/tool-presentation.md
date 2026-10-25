@@ -102,6 +102,12 @@ output wrappers. The read-only mapper unwraps only recognized shapes and retains
 metadata as supplemental JSON. A Read of literal JSON file content preserves that content.
 Neither receive nor presentation code cuts serialized JSON; remote preview bounds belong
 to Filo's decoded-field projection. Unknown tools and invalid structures keep JSON fallback.
+Codex fileChange renders every `changes` entry in order. String and object `kind` forms select
+literal full-file added/deleted rows for `add`/`delete`, preserving source prefixes and blank
+lines; `update` parses unified diff rows and shows an optional `move_path` from the kind or
+change object. Each section identifies its operation and path, including empty files. Claude
+Write/Edit and apply_patch Add File use the same literal code/diff bodies. Unsupported fields
+or malformed entries retain the whole original payload rather than omitting part of a batch.
 
 ## Localization
 

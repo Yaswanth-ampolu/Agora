@@ -70,6 +70,24 @@ class RemoteToolDetailRenderingTest {
         assertTrue(stopped.body is ToolDetailBody.Stopped)
     }
 
+    @Test fun codexLiteralAddAndMultiFileChangesReachComposeAndWebDiffBodies() {
+        val input = """{"changes":[{"path":"created.py","kind":{"type":"add"},"diff":"import pathlib\n+literal\n"},{"path":"gone.py","kind":"delete","diff":"removed"},{"path":"old.py","kind":{"type":"update","move_path":"moved.py"},"diff":"@@\n-before\n+after"}]}"""
+        val native = segment("file_edit", input, input).copy(remoteToolSource = "codex-cli")
+        compose.setContent { MaterialTheme { ToolDetailContent(native) { _, _ -> } } }
+        for (text in listOf("*** Add File: created.py", "import pathlib", "+literal",
+            "*** Delete File: gone.py", "removed", "*** Move to: moved.py", "before", "after")) {
+            compose.onNodeWithText(text).assertExists()
+        }
+        compose.onAllNodesWithText("changes").assertCountEquals(0)
+        val web = resources.webToolDetail(native)
+        val body = web.body as WebToolBody.Edit
+        assertEquals(3, body.hunks.size)
+        assertEquals(listOf("import pathlib", "+literal"), body.hunks[0].lines.filter { it.kind == "added" }.map { it.text })
+        assertEquals("removed", body.hunks[1].lines.single { it.kind == "removed" }.text)
+        assertTrue(body.hunks[2].lines.any { it.text == "*** Move to: moved.py" })
+        assertTrue(web.supplemental.isEmpty())
+    }
+
     @Test fun runningReadCanBecomeCodeAndMalformedResultKeepsOriginalJson() {
         val value = mutableStateOf(segment("Read", """{"file_path":"a.kt"}""", state = "running"))
         compose.setContent { MaterialTheme { ToolDetailContent(value.value) { _, _ -> } } }
