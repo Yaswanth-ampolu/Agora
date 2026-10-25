@@ -96,6 +96,21 @@ class RemoteSessionCatalogTest {
         compose.onNodeWithContentDescription(text(R.string.new_chat)).assertIsDisplayed()
     }
 
+    @Test fun navigationBackRestoresCatalogViewportWhileCachedRowsRefresh() {
+        val rows = (0 until 40).map { RemoteSession("session-$it", "Session $it", "/fixture", it.toLong()) }
+        state.value = state.value.copy(sessions = rows)
+        showScreen()
+        compose.onNodeWithText("Session 20").performScrollTo().assertIsDisplayed()
+        val top = compose.onNodeWithText("Session 20").getUnclippedBoundsInRoot().top
+        val catalog = state.value
+        compose.runOnIdle { state.value = state.value.copy(deviceId = null) }
+        compose.onNodeWithText("Session 20").assertDoesNotExist()
+        compose.runOnIdle { state.value = catalog.copy(loading = true) }
+        compose.onNodeWithText("Session 20").assertIsDisplayed()
+        assertEquals(top, compose.onNodeWithText("Session 20").getUnclippedBoundsInRoot().top)
+        compose.onNodeWithText(text(R.string.loading_label)).assertDoesNotExist()
+    }
+
     @Test fun populatedRefreshKeepsRowsWithOnlyBottomLinearProgress() {
         val session = RemoteSession("session", "Native Task", "/native", 1)
         state.value = state.value.copy(sessions = listOf(session), loading = true)

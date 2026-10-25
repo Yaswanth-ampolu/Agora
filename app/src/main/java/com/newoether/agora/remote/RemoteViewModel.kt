@@ -361,7 +361,7 @@ internal class RemoteViewModel(
                 }
                 try {
                     if (session == null) {
-                        val page = client.sessions()
+                        val page = client.refreshSessionCatalog(state.value.sessions)
                         if (generation != epoch) return@launch
                         mutableState.value = state.value.copy(
                             sessions = page.sessions, sessionCursor = page.nextCursor,
@@ -574,9 +574,7 @@ internal class RemoteViewModel(
                         val page = client.sessions(cursor)
                         if (selected != selectionEpoch || !sameConnection(address, client) || !visible) return@launch
                         mutableState.value = state.value.copy(
-                            sessions = state.value.sessions.map { current ->
-                                page.sessions.firstOrNull { it.id == current.id }?.let { current.copy(title = it.title) } ?: current
-                            },
+                            sessions = state.value.sessions.replaceCatalogPage(cursor, page),
                             sessionStatuses = state.value.mergeListedSessionStatuses(address, page),
                         )
                     }

@@ -260,6 +260,16 @@ can remove readiness but cannot establish Online. Native read admission, history
 their independent runtime/gateway semantics. One bounded configured-source advertisement and
 existing directory observer own source status; no generic provider/plugin registry is introduced.
 
+Sessions keeps the already loaded catalog rows and continuation while a conversation is open.
+Back renders that cache immediately; its background refresh replaces the previously loaded page
+range atomically, never shrinking it to page one while later pages are pending. Failure retains
+the complete cache. Successful visible-page refresh replaces that page's membership, so native
+archives disappear instead of surviving a title-only merge; unrelated loaded pages stay present.
+The catalog reuses SettingsScrollRetention for its numeric index and offset, keyed by device and
+source/native scope. Outgoing transitions cannot overwrite the current page's retained position.
+Local drawer rows already use the eager ViewModel snapshot and retained drawer composition;
+no second local cache or scroll owner is introduced.
+
 Sessions keeps row detail/More menus and read-only navigation available while rename, archive
 or another native mutation is pending. Busy admission belongs to the conflicting mutation,
 not the menu trigger or unrelated read-only controls. Opening a menu never submits a mutation.

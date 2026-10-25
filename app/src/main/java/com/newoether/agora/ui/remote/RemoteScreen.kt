@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -129,6 +128,8 @@ internal fun RemoteScreen(vm: RemoteViewModel, settings: SettingsRepository, act
     BackHandler(active, back)
     val target = Triple(state.deviceId, state.session?.let { "conversation" },
         if (state.addingDevice) state.editedDeviceId.orEmpty() else null)
+    val scrollRetention = remember(vm) { SettingsScrollRetention() }
+    CompositionLocalProvider(LocalSettingsScrollRetention provides scrollRetention) {
     Box(Modifier.fillMaxSize()) {
     GuardedAnimatedContent(targetState = target, forward = forward) { page ->
         var retained by remember(page) { mutableStateOf(state) }
@@ -141,7 +142,13 @@ internal fun RemoteScreen(vm: RemoteViewModel, settings: SettingsRepository, act
             page.first != null -> {
                 var showUsage by remember(displayed.deviceId, displayed.confirmationPath) { mutableStateOf(false) }
                 if (showUsage && current && active) RemoteUsageSheet(vm) { showUsage = false }
-                val listState = rememberLazyListState()
+                lateinit var listState: androidx.compose.foundation.lazy.LazyListState
+                key(displayed.deviceId, displayed.confirmationPath) {
+                    CompositionLocalProvider(
+                        LocalSettingsScrollPath provides listOf("remote-catalog", displayed.deviceId, displayed.confirmationPath),
+                        LocalSettingsScrollRetentionActive provides (current && active),
+                    ) { listState = rememberSettingsLazyListState() }
+                }
                 val visibleRows = remember { mutableStateMapOf<String, Boolean>() }
                 LaunchedEffect(current, active, displayed.deviceId, displayed.sessions) {
                     if (!current || !active) return@LaunchedEffect
@@ -305,6 +312,7 @@ internal fun RemoteScreen(vm: RemoteViewModel, settings: SettingsRepository, act
         exit = fadeOut(tween(300)),
     ) {
         MotionAwareLinearProgressIndicator(Modifier.fillMaxWidth().height(4.dp))
+    }
     }
     }
 }
