@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.newoether.agora.R
+import com.newoether.agora.data.inferModelAlias
 import com.newoether.agora.data.repository.SettingsRepository
 import com.newoether.agora.model.StableMessageList
 import com.newoether.agora.model.MessageStatus
@@ -363,8 +364,8 @@ internal fun RemoteConversation(
                             !submitting && !stopping && !state.controlling
                         ComposerModelSelector(
                             displayText = (state.models.takeIf { state.capabilities.models }
-                                ?.firstOrNull { it.id == state.selectedModel }?.name
-                                ?: state.selectedModel)?.replace('-', ' ') ?: stringResource(
+                                ?.firstOrNull { it.id == state.selectedModel }?.displayName
+                                ?: state.selectedModel?.let(::inferModelAlias)) ?: stringResource(
                                     if (state.capabilities.models && (state.modelsLoading || state.loading)) R.string.loading_label
                                     else R.string.remote_model_unavailable),
                             isModelValid = state.selectedModel != null, expanded = activeMenu == "model",
@@ -396,7 +397,7 @@ internal fun RemoteConversation(
                                 )
                                 sortedModels.forEach { model ->
                                     ComposerModelMenuItem(
-                                        displayText = model.name.replace('-', ' '),
+                                        displayText = model.displayName,
                                         selected = model.id == state.selectedModel,
                                         enabled = modelChoice,
                                         onClick = {

@@ -549,7 +549,11 @@ The composer shows localized pending/confirmed/failed status and actual mismatch
 claiming native config changed. Other sources keep Send behind outstanding native application.
 Draft choices remain local until first Send. Unknown tier
 is distinct from confirmed Default (`serviceTierKnown:true` with null/default).
-Native model catalogs define model IDs. Claude Mod's named effort controls reflect the official
+Native model catalogs define model IDs. Remote displays a nonblank native model name verbatim
+in both the selector and its menu. A missing catalog entry or blank native name uses the shared
+model-alias display fallback; neither presentation path changes the model ID sent to Filo.
+CLI session access retains source-level read-only model metadata while execution capabilities
+remain bound to the admitted native task. Claude Mod's named effort controls reflect the official
 request rewrite API; they do not assert model-specific support. Other sources use their native
 catalog's supported efforts, tiers and defaults.
 Settings apply to subsequent turns.

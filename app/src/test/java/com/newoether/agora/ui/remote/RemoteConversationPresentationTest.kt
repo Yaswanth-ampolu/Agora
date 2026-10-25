@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.*
@@ -23,6 +24,7 @@ import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -113,10 +115,46 @@ class RemoteConversationPresentationTest {
             draftSessionId = null, runtime = RemoteRuntime("idle", model = "actual-native-model"),
         )
         show()
-        compose.onNodeWithText("actual native model").assertIsDisplayed().performClick()
+        compose.onNodeWithText("Actual Native Model").assertIsDisplayed().performClick()
         compose.onNodeWithText(text(R.string.remote_model_unavailable)).assertExists().assertIsNotEnabled()
         verify(exactly = 0) { vm.setModel(any()) }
         verify(exactly = 0) { vm.refreshModels() }
+    }
+
+    @Test fun cliNativeNameAndEffortChoicesSurviveTheSessionCapabilityFence() {
+        val model = RemoteModel("gpt-6.1-sol", "GPT-6.1-Sol", true,
+            listOf("low", "medium", "high", "xhigh", "max", "ultra"), "low")
+        val caps = RemoteCapabilities(history = true, live = true, models = true, settings = listOf("model", "effort"))
+        val source = RemoteAdapter("codex-cli", "codex", "cli", "connected",
+            nativeScopeId = "scope", capabilities = caps)
+        state = state.copy(
+            devices = state.devices.map { it.copy(multiAdapter = true, adapters = listOf(source)) },
+            adapterSelections = mapOf("device" to source.id),
+            session = RemoteSession("native", "", "", 0,
+                access = RemoteSessionAccess("scope", "canonical", "binding", caps)),
+            draftSessionId = null, models = listOf(model),
+            runtime = RemoteRuntime("idle", model = model.id, effort = "xhigh"),
+        )
+        show()
+        compose.onNodeWithText("GPT-6.1-Sol").assertIsDisplayed().performClick()
+        compose.onAllNodesWithText("GPT-6.1-Sol").onLast().assertIsEnabled().performClick()
+        verify(exactly = 1) { vm.setModel("gpt-6.1-sol") }
+        compose.onNodeWithContentDescription(text(R.string.tools)).performClick()
+        compose.onNodeWithText(text(R.string.thinking)).assertIsEnabled().performClick()
+        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress))
+            .assertIsEnabled()
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.ProgressBarRangeInfo,
+                ProgressBarRangeInfo(3f, 0f..5f, 4)))
+            .performSemanticsAction(SemanticsActions.SetProgress) { assertTrue(it(0f)) }
+        verify(exactly = 1) { vm.setThinkingLevel("low") }
+    }
+
+    @Test fun blankNativeNameUsesTheSharedFallbackInSelectorAndMenuWithoutChangingIdentity() {
+        state = state.copy(models = listOf(RemoteModel("gpt-6.1-sol", "  ", true)))
+        show()
+        compose.onNodeWithText("GPT 6.1 Sol").assertIsDisplayed().performClick()
+        compose.onAllNodesWithText("GPT 6.1 Sol").onLast().assertIsEnabled().performClick()
+        verify(exactly = 1) { vm.setModel("gpt-6.1-sol") }
     }
 
     @Test fun supportedThinkingAndUnsupportedTierAreDisabledIndependently() {

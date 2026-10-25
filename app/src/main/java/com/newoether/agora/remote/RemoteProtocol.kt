@@ -1,5 +1,6 @@
 package com.newoether.agora.remote
 
+import com.newoether.agora.data.inferModelAlias
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.buildJsonObject
@@ -75,7 +76,9 @@ internal data class RemoteModel(
     val id: String, val name: String, val isDefault: Boolean = false,
     val reasoningEfforts: List<String>? = null, val defaultReasoningEffort: String? = null,
     val serviceTiers: List<RemoteServiceTier>? = null, val defaultServiceTier: String? = null,
-)
+) {
+    val displayName: String get() = name.takeIf(String::isNotBlank) ?: inferModelAlias(id)
+}
 @Serializable
 internal data class RemoteServiceTier(val id: String, val name: String, val description: String = "")
 @Serializable
