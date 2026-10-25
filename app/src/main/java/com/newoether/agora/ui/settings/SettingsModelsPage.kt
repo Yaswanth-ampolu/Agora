@@ -17,7 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Clear
@@ -579,7 +579,7 @@ fun SettingsModelsPage(viewModel: ChatViewModel, onBack: () -> Unit) {
                             onValueChange = { customModelId = it },
                             singleLine = true,
                             label = { Text(stringResource(R.string.model_id_label)) },
-                            leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null) },
+                            leadingIcon = { Icon(Icons.Default.Tag, contentDescription = null) },
                             isError = modelAlreadyExists,
                             supportingText = if (modelAlreadyExists) {
                                 { Text(stringResource(R.string.models_custom_exists)) }

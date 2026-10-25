@@ -19,7 +19,7 @@ class ModelImportWiringTest {
         assertTrue(editor.contains("filePath = draft.modelPath"))
         assertTrue(editor.contains("emptyIcon = Icons.Default.VisibilityOff"))
         assertTrue(editor.contains("importedEffect = stringResource(R.string.local_projector_enabled)"))
-        assertTrue(editor.contains("SettingsIconContent(icon = Icons.Default.Badge)"))
+        assertTrue(editor.contains("SettingsIconContent(icon = Icons.Default.Tag)"))
         assertTrue(editor.contains("description = stringResource(R.string.local_projector_desc)"))
         assertTrue(editor.contains("importing = importingProjector == false"))
         assertTrue(editor.contains("importing = importingProjector == true"))

@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Save
@@ -186,7 +186,7 @@ internal fun LocalChatModelEditor(
                         }
                     }
                     add {
-                        SettingsIconContent(icon = Icons.Default.Badge) {
+                        SettingsIconContent(icon = Icons.Default.Tag) {
                             McpLabeledField(
                                 label = stringResource(R.string.model_id_label),
                                 value = draft.modelId,

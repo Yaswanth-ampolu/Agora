@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Cached
 import androidx.compose.material.icons.filled.Check
@@ -426,7 +426,7 @@ internal fun EmbeddingModelEditor(
                     title = stringResource(R.string.embedding_model_label),
                     items = buildList {
                         add {
-                            SettingsIconContent(icon = Icons.Default.Badge) {
+                            SettingsIconContent(icon = Icons.Default.Tag) {
                                 if (isNew) {
                                     McpLabeledField(
                                         label = stringResource(R.string.model_id_label),

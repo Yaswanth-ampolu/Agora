@@ -74,7 +74,7 @@ class EmbeddingModelEditorSourceContractTest {
             "} else if (isNew) {\n                SettingsGroup(",
         )
 
-        assertTrue(model.contains("SettingsIconContent(icon = Icons.Default.Badge)"))
+        assertTrue(model.contains("SettingsIconContent(icon = Icons.Default.Tag)"))
         assertEquals(2, Regex("R.string.model_id_label").findAll(model).count())
         assertEquals(1, Regex("""\bMcpLabeledField\(""").findAll(model).count())
         assertTrue(model.contains("value = draft.modelName"))
