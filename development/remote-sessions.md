@@ -50,7 +50,10 @@ session-local rewrites for subsequent main turns; they remain pending until the 
 pending; mismatches fail and expose actual values. Named effort choices come from the native
 request API, not a per-model support guarantee. Claude Desktop uses the same Code
 Mod implementation but still needs embedded-engine runtime qualification; CLI probes do not
-qualify Desktop. Phone-created Claude sessions are outside this stage. Chat/Cowork are not advertised.
+qualify Desktop. Remote creation is supported only by the separate Claude Code execution path.
+Claude Desktop Code uses existing Mod-registered conversations and does not support creation;
+New Chat stays unavailable through the create capability, without an unsupported-creation
+notice in the catalog. Chat/Cowork are not advertised.
 Filo-created Codex Desktop tasks may execute on its runtime. An existing idle Desktop task
 may be recovered only inside an explicit Send or settings request after verifying the
 native account, idle state and absent IPC owner. Recheck ownership before allocation and
