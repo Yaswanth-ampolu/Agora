@@ -62,6 +62,7 @@ class KeywordSearchRoomTest {
         add("citation-older", "answer", 1, citation = "中文来源 needle")
         add("compact_summary", "answer", 99, citation = "中文来源 needle")
         assertEquals(listOf("body"), search("关键词"))
+        assertEquals(listOf("body"), search("关键词 needle"))
         assertEquals(listOf("body"), search("100%"))
         assertEquals(listOf("body"), search("a_b"))
         assertEquals(listOf("body"), search("C:\\folder"))
@@ -85,7 +86,7 @@ class KeywordSearchRoomTest {
     @Test fun bothPageQueriesUseTimestampIndexAndBoundInnerRead() {
         for (query in listOf(KEYWORD_MESSAGE_FIRST_PAGE, KEYWORD_MESSAGE_NEXT_PAGE)) {
             // EXPLAIN runs the exact production query with fixed synthetic arguments.
-            val sql = query.replace(":query", "'needle'").replace(":pageSize", "128")
+            val sql = query.replace(":literalQuery", "NULL").replace(":query", "'needle'").replace(":pageSize", "128")
                 .replace(":beforeTimestamp", "20").replace(":beforeId", "'before'")
             val details = database.openHelper.readableDatabase.query("EXPLAIN QUERY PLAN $sql").use { cursor ->
                 buildList { while (cursor.moveToNext()) add(cursor.getString(3)) }

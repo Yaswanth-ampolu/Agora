@@ -64,9 +64,11 @@ the semantic minimum text length; existing short nonempty messages remain search
 
 `ChatSearchDao` seeks `(timestamp, id)` newest first through `index_messages_timestamp_id`.
 A limited inner query selects at most 128 message identities before the outer query applies shared
-visibility, text/title LIKE matching and citation eligibility. Hidden rows advance the cursor but
-cannot match or cause text/JSON to be returned. SQL returns only identity, time, a match flag, and
-eligible citation JSON; Kotlin decodes citation titles outside the database read. The repository stops
+visibility, text/title matching and citation eligibility. Queries without ASCII letters use literal
+`instr` matching; queries containing ASCII letters retain escaped LIKE for its ASCII case folding.
+The fixed citation-segment marker also uses `instr`. Hidden rows advance the cursor but cannot match
+or cause text/JSON to be returned. SQL returns only identity, time, a match flag, and eligible citation
+JSON; Kotlin decodes citation titles outside the database read. The repository stops
 at the requested count, hydrates only winners and rechecks visibility. It runs on IO, checks
 cancellation during matching and yields between pages. No whole-search transaction, OFFSET scan,
 full-entity corpus load or second citation scan is allowed. A miss still scans bounded pages until

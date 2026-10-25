@@ -64,9 +64,11 @@ internal suspend fun searchConversationMessages(
 ): List<MessageEntity> = withContext(Dispatchers.IO) {
     if (query.isBlank() || limit <= 0) return@withContext emptyList()
     val escapedQuery = escapeLikePattern(query)
+    // SQLite LIKE folds only ASCII letters. Other literals can use its faster exact substring scan.
+    val literalQuery = query.takeUnless { value -> value.any { it in 'a'..'z' || it in 'A'..'Z' } }
     val ids = boundedKeywordMatches(query, limit) { before, pageSize ->
-        if (before == null) chatDao.getKeywordSearchFirstPage(escapedQuery, pageSize)
-        else chatDao.getKeywordSearchNextPage(escapedQuery, before.timestamp, before.id, pageSize)
+        if (before == null) chatDao.getKeywordSearchFirstPage(escapedQuery, pageSize, literalQuery)
+        else chatDao.getKeywordSearchNextPage(escapedQuery, before.timestamp, before.id, pageSize, literalQuery)
     }
     if (ids.isEmpty()) return@withContext emptyList()
     // Visibility may change while pages are scanned. Hydrate only the bounded winners.

@@ -43,12 +43,14 @@ internal const val HISTORY_MESSAGE_ELIGIBILITY = """
 internal const val KEYWORD_MESSAGE_PROJECTION = """
     SELECT m.id, m.timestamp,
         CASE WHEN $HISTORY_MESSAGE_ELIGIBILITY THEN
-            (m.text LIKE '%' || :query || '%' ESCAPE '\' OR
-             c.title LIKE '%' || :query || '%' ESCAPE '\')
+            CASE WHEN :literalQuery IS NOT NULL THEN
+                (instr(m.text, :literalQuery) > 0 OR instr(c.title, :literalQuery) > 0)
+            ELSE (m.text LIKE '%' || :query || '%' ESCAPE '\' OR
+                  c.title LIKE '%' || :query || '%' ESCAPE '\') END
             ELSE 0 END AS directMatch,
         CASE WHEN $HISTORY_MESSAGE_ELIGIBILITY
             AND m.participant = 'MODEL'
-            AND m.toolCallJson LIKE '%"type":"citation"%'
+            AND instr(m.toolCallJson, '"type":"citation"') > 0
             THEN m.toolCallJson ELSE NULL END AS toolCallJson
     FROM (
 """
@@ -71,7 +73,11 @@ internal const val KEYWORD_MESSAGE_NEXT_PAGE = KEYWORD_MESSAGE_PROJECTION + """
 /** Search eligibility and bounded projections inherited by the sole [ChatDao]. */
 interface ChatSearchDao {
     @Query(KEYWORD_MESSAGE_FIRST_PAGE)
-    suspend fun getKeywordSearchFirstPage(query: String, pageSize: Int): List<KeywordSearchRow>
+    suspend fun getKeywordSearchFirstPage(
+        query: String,
+        pageSize: Int,
+        literalQuery: String? = null,
+    ): List<KeywordSearchRow>
 
     @Query(KEYWORD_MESSAGE_NEXT_PAGE)
     suspend fun getKeywordSearchNextPage(
@@ -79,6 +85,7 @@ interface ChatSearchDao {
         beforeTimestamp: Long,
         beforeId: String,
         pageSize: Int,
+        literalQuery: String? = null,
     ): List<KeywordSearchRow>
 
     // Keep messages first so each page seeks its primary key instead of sorting the corpus again.
