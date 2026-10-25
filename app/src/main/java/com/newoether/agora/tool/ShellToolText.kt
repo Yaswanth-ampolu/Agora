@@ -15,10 +15,10 @@ import kotlinx.serialization.json.intOrNull
  * line, the raw body (command output or file content) with no JSON escaping.
  */
 internal val PLAIN_TEXT_SHELL_TOOLS = setOf(
-    "execute_shell_command",
-    "get_shell_job",
-    "wait_for_job",
-    "stop_shell_job",
+    "shell_exec",
+    "shell_job_get",
+    "shell_job_wait",
+    "shell_job_stop",
     "file_read",
     "file_write",
     "file_edit",
@@ -28,7 +28,7 @@ internal val PLAIN_TEXT_SHELL_TOOLS = setOf(
 )
 
 /** Tools whose output body honours `tail_lines`. */
-internal val TAIL_LINES_SHELL_TOOLS = setOf("execute_shell_command", "get_shell_job", "wait_for_job")
+internal val TAIL_LINES_SHELL_TOOLS = setOf("shell_exec", "shell_job_get", "shell_job_wait")
 
 /** Envelope fields that repeat the call arguments or only matter to the UI. */
 private val OMITTED_KEYS = setOf(
@@ -66,7 +66,7 @@ internal fun shellToolModelText(
         obj["start_line"] != null -> FILE_READ_LINE_MODE_OMITTED_KEYS
         else -> FILE_READ_OMITTED_KEYS
     }
-    return genericText(obj, tailLines.takeIf { toolName in TAIL_LINES_SHELL_TOOLS }, omit)
+    return genericText(obj, tailLines.takeIf { BuiltInToolNames.canonical(toolName) in TAIL_LINES_SHELL_TOOLS }, omit)
 }
 
 /**
@@ -78,7 +78,7 @@ internal fun shellModelFacingResult(
     arguments: String,
     result: ToolExecutionResult,
 ): ToolExecutionResult {
-    if (name !in PLAIN_TEXT_SHELL_TOOLS) return result
+    if (BuiltInToolNames.canonical(name) !in PLAIN_TEXT_SHELL_TOOLS) return result
     if (result.structuredContent != null || result.images.isNotEmpty()) return result
     val args = parseToolArgs(arguments)
     val searchRoot = arg(args, "path").takeIf { name == "file_glob" || name == "file_grep" }

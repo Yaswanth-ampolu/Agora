@@ -278,7 +278,7 @@ private fun Resources.completedToolDetailBody(presentation: ToolPresentation): T
  */
 private fun Resources.storedFileReadBody(presentation: ToolPresentation): ToolDetailBody? {
     val content = presentation.rawTextResult ?: presentation.rawResult ?: return null
-    val activeMemory = presentation.toolName == "read_active_memory"
+    val activeMemory = presentation.toolName == "active_memory_read"
     // The resolver sets a read's subject only when exactly one file was requested.
     val name = presentation.subject?.takeUnless { activeMemory }
     val lines = if (activeMemory || name != null) numberedCodeLines(content) else null

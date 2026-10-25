@@ -84,10 +84,10 @@ internal class ConchBackend(override val device: ShellDeviceConfig) : Backend {
         timeoutMs: Int,
         onOutput: suspend (String) -> Unit,
     ): String {
-        if (url.isBlank()) return jsonError("execute_shell_command", "Server \"$deviceName\" has no URL configured.")
+        if (url.isBlank()) return jsonError("shell_exec", "Server \"$deviceName\" has no URL configured.")
         if (!client.fetchPublicKey() && apiKey.isNotBlank()) {
             return jsonError(
-                "execute_shell_command",
+                "shell_exec",
                 client.lastError ?: "Conch public-key exchange failed for $url",
                 server = deviceName,
             )
@@ -121,7 +121,7 @@ internal class ConchBackend(override val device: ShellDeviceConfig) : Backend {
             throw cancelled
         } catch (e: Exception) {
             return jsonError(
-                "execute_shell_command",
+                "shell_exec",
                 com.newoether.agora.util.describeConchRequestFailure(
                     url,
                     "/execute request",
@@ -139,7 +139,7 @@ internal class ConchBackend(override val device: ShellDeviceConfig) : Backend {
                 ?: "empty response"
             handle.close()
             return jsonError(
-                "execute_shell_command",
+                "shell_exec",
                 "Conch at ${prepared.serverUrl} returned HTTP $statusCode: $detail",
                 server = deviceName,
                 command = cmd,
@@ -153,7 +153,7 @@ internal class ConchBackend(override val device: ShellDeviceConfig) : Backend {
                 onOutput = onOutput,
             )
             buildJsonObject {
-                put("type", "execute_shell_command"); put("server", deviceName); put("command", cmd)
+                put("type", "shell_exec"); put("server", deviceName); put("command", cmd)
                 if (result.errorMessage != null) {
                     put("error", "execution_error")
                     put("message", result.errorMessage)
@@ -167,7 +167,7 @@ internal class ConchBackend(override val device: ShellDeviceConfig) : Backend {
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (e: Exception) {
-            jsonError("execute_shell_command", e.message ?: "Unknown error", server = deviceName, command = cmd)
+            jsonError("shell_exec", e.message ?: "Unknown error", server = deviceName, command = cmd)
         } finally { handle.close() }
     }
 
@@ -233,18 +233,18 @@ internal class SshBackend(override val device: ShellDeviceConfig) : Backend {
     }
 
     override suspend fun executeCommand(cmd: String, workdir: String, timeoutMs: Int): String {
-        if (host.isBlank()) return jsonError("execute_shell_command", "SSH device \"$deviceName\" has no host configured.")
+        if (host.isBlank()) return jsonError("shell_exec", "SSH device \"$deviceName\" has no host configured.")
         return try {
             val result = client.executeCommand(cmd, workdir, timeoutMs)
             buildJsonObject {
-                put("type", "execute_shell_command"); put("server", deviceName); put("command", cmd)
+                put("type", "shell_exec"); put("server", deviceName); put("command", cmd)
                 put("exit_code", result.exitCode)
                 put("output", (result.stdout + if (result.stderr.isNotBlank()) "\n${result.stderr}" else "").trimEnd())
             }.toString()
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (e: Exception) {
-            jsonError("execute_shell_command", e.message ?: "Unknown error", server = deviceName, command = cmd)
+            jsonError("shell_exec", e.message ?: "Unknown error", server = deviceName, command = cmd)
         }
     }
 
@@ -293,11 +293,11 @@ internal class SandboxBackend(sandbox: SandboxManager?) : Backend {
     private val mgr = sandbox ?: throw IllegalStateException("Sandbox not available")
 
     override suspend fun executeCommand(cmd: String, workdir: String, timeoutMs: Int): String {
-        if (!mgr.isAvailable()) return jsonError("execute_shell_command", "Local Sandbox is not installed.")
+        if (!mgr.isAvailable()) return jsonError("shell_exec", "Local Sandbox is not installed.")
         return try {
             val result = mgr.executeCommand(cmd, workdir, timeoutMs)
             buildJsonObject {
-                put("type", "execute_shell_command"); put("server", "Local Sandbox"); put("command", cmd)
+                put("type", "shell_exec"); put("server", "Local Sandbox"); put("command", cmd)
                 put("exit_code", result.exitCode)
                 result.warning?.let { put("warning", it) }
                 put("output", (result.stdout + if (result.stderr.isNotBlank()) "\n${result.stderr}" else "").trimEnd())
@@ -305,7 +305,7 @@ internal class SandboxBackend(sandbox: SandboxManager?) : Backend {
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (e: Exception) {
-            jsonError("execute_shell_command", e.message ?: "Unknown error", server = "Local Sandbox", command = cmd)
+            jsonError("shell_exec", e.message ?: "Unknown error", server = "Local Sandbox", command = cmd)
         }
     }
 

@@ -24,7 +24,7 @@ data class SubagentCompletion(
     }
 }
 
-/** Selected-parent capsule projection; only explicit list_agents loads optional diagnostics. */
+/** Selected-parent capsule projection; only explicit agent_list loads optional diagnostics. */
 @Serializable
 data class SubagentSummary(
     val id: String,

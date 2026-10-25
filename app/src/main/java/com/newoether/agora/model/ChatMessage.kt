@@ -87,7 +87,7 @@ data class MessageSegment(
     @Transient
     val toolImageRequestKey: String? = null,
     /**
-     * Transcription description of a tool-result image (view_image). Persisted WITH the result
+     * Transcription description of a tool-result image (file_view_image). Persisted WITH the result
      * row so the API projection can inject it into the model context — the round-boundary path
      * rebuild does not include the model message, so a segment living there is unreachable.
      * Displayed only in the Image Transcription thinking block, never in the tool card.

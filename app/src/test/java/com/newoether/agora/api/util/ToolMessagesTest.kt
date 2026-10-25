@@ -223,7 +223,7 @@ class ToolMessagesTest {
             messages = messages,
             includeImages = true,
         ).single { it.id.startsWith("image_context_") }
-        assertTrue(visualTurn.text.contains("--- Image Transcription: view_image ---"))
+        assertTrue(visualTurn.text.contains("--- Image Transcription: file_view_image ---"))
         assertTrue(visualTurn.text.contains("A cat sitting."))
 
         // Non-vision models receive the description instead of the unavailable notice.

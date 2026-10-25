@@ -133,7 +133,8 @@ internal object ToolPresentationResolver {
         )
     }
 
-    fun kindForToolName(toolName: String?): ToolKind = kindFor(toolName.orEmpty())
+    fun kindForToolName(toolName: String?): ToolKind =
+        kindFor(com.newoether.agora.tool.BuiltInToolNames.canonical(toolName.orEmpty()))
 
     private const val RESOLVED_CACHE_SIZE = 64
 
@@ -155,14 +156,16 @@ internal object ToolPresentationResolver {
     }
 
     private fun compute(segment: MessageSegment): ToolPresentation {
-        val toolName = segment.toolName.orEmpty()
+        val toolName = if (segment.remoteToolSource == null) {
+            com.newoether.agora.tool.BuiltInToolNames.canonical(segment.toolName.orEmpty())
+        } else segment.toolName.orEmpty()
         val remoteShell = if (segment.remoteToolSource != null && isRemoteShellTool(toolName)) {
             mapRemoteToolDetail(segment.remoteToolSource, toolName, segment.toolArgs,
                 segment.toolResult ?: segment.toolProgress, segment.toolState)
         } else null
         val remoteShellBody = remoteShell?.body as? ToolDetailBody.Shell
         val malformed = malformedCallOriginals(toolName, segment.toolArgs)
-        val kind = if (remoteShellBody != null) ToolKind.SHELL_EXECUTE else kindFor(toolName)
+        val kind = if (remoteShellBody != null) ToolKind.SHELL_EXECUTE else kindForToolName(toolName)
         val displayArguments = malformed?.arguments ?: segment.toolArgs
         val resultElement = parseElement(
             segment.toolStructuredResult ?: segment.toolResult.takeUnless {
@@ -297,49 +300,49 @@ internal object ToolPresentationResolver {
     }
 
     private fun kindFor(name: String): ToolKind = when (name) {
-        "list_memory_files" -> ToolKind.MEMORY_LIST
-        "read_memory_file", "read_active_memory" -> ToolKind.MEMORY_READ
-        "create_memory_file" -> ToolKind.MEMORY_CREATE
-        "edit_memory_file" -> ToolKind.MEMORY_EDIT
-        "delete_memory_file" -> ToolKind.MEMORY_DELETE
-        "update_active_memory" -> ToolKind.MEMORY_UPDATE_ACTIVE
-        "list_skill_files" -> ToolKind.SKILL_LIST
-        "read_skill_file" -> ToolKind.SKILL_READ
-        "create_skill_file" -> ToolKind.SKILL_CREATE
-        "edit_skill_file" -> ToolKind.SKILL_EDIT
-        "delete_skill_file" -> ToolKind.SKILL_DELETE
+        "memory_list" -> ToolKind.MEMORY_LIST
+        "memory_read", "active_memory_read" -> ToolKind.MEMORY_READ
+        "memory_create" -> ToolKind.MEMORY_CREATE
+        "memory_edit" -> ToolKind.MEMORY_EDIT
+        "memory_delete" -> ToolKind.MEMORY_DELETE
+        "active_memory_update" -> ToolKind.MEMORY_UPDATE_ACTIVE
+        "skill_list" -> ToolKind.SKILL_LIST
+        "skill_read" -> ToolKind.SKILL_READ
+        "skill_create" -> ToolKind.SKILL_CREATE
+        "skill_edit" -> ToolKind.SKILL_EDIT
+        "skill_delete" -> ToolKind.SKILL_DELETE
         "web_search", "openai_search", "google_search" -> ToolKind.WEB_SEARCH
         "web_fetch" -> ToolKind.WEB_FETCH
-        "search_conversations" -> ToolKind.CONVERSATION_SEARCH
-        "list_conversations" -> ToolKind.CONVERSATION_LIST
-        "read_conversation" -> ToolKind.CONVERSATION_READ
-        "list_shells" -> ToolKind.SHELL_LIST
-        "execute_shell_command" -> ToolKind.SHELL_EXECUTE
-        "list_shell_jobs" -> ToolKind.SHELL_JOB_LIST
-        "get_shell_job" -> ToolKind.SHELL_JOB_GET
-        "wait_for_job" -> ToolKind.SHELL_JOB_WAIT
-        "stop_shell_job" -> ToolKind.SHELL_JOB_STOP
+        "conversation_search" -> ToolKind.CONVERSATION_SEARCH
+        "conversation_list" -> ToolKind.CONVERSATION_LIST
+        "conversation_read" -> ToolKind.CONVERSATION_READ
+        "shell_list" -> ToolKind.SHELL_LIST
+        "shell_exec" -> ToolKind.SHELL_EXECUTE
+        "shell_job_list" -> ToolKind.SHELL_JOB_LIST
+        "shell_job_get" -> ToolKind.SHELL_JOB_GET
+        "shell_job_wait" -> ToolKind.SHELL_JOB_WAIT
+        "shell_job_stop" -> ToolKind.SHELL_JOB_STOP
         "file_read" -> ToolKind.FILE_READ
         "file_write" -> ToolKind.FILE_WRITE
         "file_edit", "file_multi_edit" -> ToolKind.FILE_EDIT
         "file_glob" -> ToolKind.FILE_GLOB
         "file_grep" -> ToolKind.FILE_GREP
-        "view_image" -> ToolKind.IMAGE_VIEW
-        "generate_image" -> ToolKind.IMAGE_GENERATE
-        "create_task" -> ToolKind.TASK_CREATE
-        "list_tasks" -> ToolKind.TASK_LIST
-        "delete_task" -> ToolKind.TASK_DELETE
-        "start_loop" -> ToolKind.LOOP_START
-        "stop_loop" -> ToolKind.LOOP_STOP
+        "file_view_image" -> ToolKind.IMAGE_VIEW
+        "image_generate" -> ToolKind.IMAGE_GENERATE
+        "task_create" -> ToolKind.TASK_CREATE
+        "task_list" -> ToolKind.TASK_LIST
+        "task_delete" -> ToolKind.TASK_DELETE
+        "loop_start" -> ToolKind.LOOP_START
+        "loop_stop" -> ToolKind.LOOP_STOP
         "ask_user" -> ToolKind.ASK_USER
-        "read_todo" -> ToolKind.TODO_READ
-        "update_todo" -> ToolKind.TODO_UPDATE
-        "spawn_agent" -> ToolKind.SUBAGENT_SPAWN
-        "send_agent_message" -> ToolKind.SUBAGENT_SEND
-        "wait_agents" -> ToolKind.SUBAGENT_WAIT
-        "list_agents" -> ToolKind.SUBAGENT_LIST
-        "stop_agent" -> ToolKind.SUBAGENT_STOP
-        "delete_agent" -> ToolKind.SUBAGENT_DELETE
+        "todo_read" -> ToolKind.TODO_READ
+        "todo_update" -> ToolKind.TODO_UPDATE
+        "agent_spawn" -> ToolKind.SUBAGENT_SPAWN
+        "agent_send_message" -> ToolKind.SUBAGENT_SEND
+        "agent_wait" -> ToolKind.SUBAGENT_WAIT
+        "agent_list" -> ToolKind.SUBAGENT_LIST
+        "agent_stop" -> ToolKind.SUBAGENT_STOP
+        "agent_delete" -> ToolKind.SUBAGENT_DELETE
         "mcp_list_servers" -> ToolKind.MCP_LIST
         "mcp_search_tools" -> ToolKind.MCP_SEARCH
         else -> if (name.startsWith("mcp_")) ToolKind.MCP else ToolKind.UNKNOWN

@@ -28,7 +28,7 @@ Adding a DataStore key does not make it portable. A setting enters an archive on
 contract, export, restore, Replace reset, and focused compatibility tests are updated together.
 
 Conversation `createdAt` is stable portable metadata. New conversations record creation time once;
-message, title and status writes preserve it. Subagent capsules and list_agents use ascending
+message, title and status writes preserve it. Subagent capsules and agent_list use ascending
 `createdAt`, then child ID, shared across native and WebUI. Schema 38 to 39 fills legacy rows once
 from the minimum stored update, Run-start and message times, retaining every graph and receipt;
 this is an approximation when no original creation record exists. That migration advances each
@@ -229,7 +229,7 @@ local preference when its field is absent. REPLACE clears both keys before resto
 so older archives resolve to true. They control tool admission, not conversation Todo contents or
 subagent ownership, and contain no credentials or device paths.
 `subagentDeleteEnabled` is a default-false portable boolean with the same MERGE/REPLACE rules;
-older archives resolve to false. It controls only `delete_agent` admission.
+older archives resolve to false. It controls only `agent_delete` admission.
 
 `subagentMaxTotal` and `subagentMaxConcurrent` are secret-free integer limits per parent, with
 range 1–16 for both and defaults 16 and 4. There is no unlimited value. Stored reads, saves and

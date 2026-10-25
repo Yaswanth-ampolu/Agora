@@ -110,7 +110,7 @@ class ConversationExecutionCoordinator(
                 val running = generationAdmissions.values.count { it.parentId == parentId }
                 check(running < maximum) {
                     "Subagent concurrency limit reached ($running/$maximum running for this conversation). " +
-                        "Wait for a running subagent to finish (wait_agents) before starting another."
+                        "Wait for a running subagent to finish (agent_wait) before starting another."
                 }
                 GenerationAdmission(parentId).also {
                     generationAdmissions[conversationId] = it

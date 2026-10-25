@@ -12,19 +12,19 @@ page plus the requested top candidates; corpus growth must not translate into An
   remain owned by the existing RAG/provider path.
 - Searchable sources exclude Task conversations, non-USER/non-MODEL rows, blank or short source
   text, and synthetic tool/result/Compact rows.
-- Literal search, expanded search context and read_conversation also exclude synthetic Compact
+- Literal search, expanded search context and conversation_read also exclude synthetic Compact
   summaries. Branch traversal may cross these rows but must not return their bodies as messages.
 - Global history tools and drawer search exclude child conversations through root-only database
   eligibility, before count, pagination, literal/citation search and semantic ranking. A child must
   never displace a visible root in a limited page or top-K result. Final semantic hydration rechecks
   root eligibility. Existing child content and embeddings remain stored; this read boundary does
   not change cache admission or delete data.
-- `read_conversation` admits a child only when its durable `parentConversationId` equals the calling
+- `conversation_read` admits a child only when its durable `parentConversationId` equals the calling
   generation's conversation ID. Missing caller identity, unrelated roots, child self-reads and sibling
   reads cannot authorize that child. Unauthorized and missing IDs return the same `not_found` result
   before loading topology or message bodies. Ordinary top-level history reads remain available.
-  Parent-owned child discovery continues through `list_agents`, never `list_conversations`.
-- Every `list_conversations` item includes a JSON boolean `is_generating`. Each call captures one
+  Parent-owned child discovery continues through `agent_list`, never `conversation_list`.
+- Every `conversation_list` item includes a JSON boolean `is_generating`. Each call captures one
   current snapshot from the existing generation registry plus active automation ownership, matching
   the native drawer indicator. Idle, completed, failed and stopped owners return false once their
   canonical execution ownership settles. Stored orphaned Runs do not imply live generation. This

@@ -38,7 +38,7 @@ data class ToolExecutionResult(
     val displayText: String? = null,
     val isError: Boolean = false,
     /**
-     * Declares that [images] are INPUT the model must understand (e.g. view_image), so the tool
+     * Declares that [images] are INPUT the model must understand (e.g. file_view_image), so the tool
      * batch executor runs the per-generation image transcription flow over them and appends the
      * description to [text]. Output images (image generation) never set this.
      */

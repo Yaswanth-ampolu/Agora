@@ -154,7 +154,7 @@ internal class ApprovedFeatureSourceContractTest : UiSourceContractFixture() {
         assertTrue(transcription.contains("suspend fun describeImageWithProgress("))
         assertFalse(contracts.contains("toolImageTranscriber"))
         val toolMessages = source(root, "com/newoether/agora/api/util/ToolMessages.kt")
-        assertTrue(toolMessages.contains("--- Image Transcription: view_image ---"))
+        assertTrue(toolMessages.contains("--- Image Transcription: file_view_image ---"))
         assertTrue(toolMessages.contains("transcriptionDescriptionsForBatch("))
         // Defect pins (owner device reports): transcription-enabled models never receive raw
         // images; the compact group title stays the transcription label while TOOL_CALLING;
@@ -707,11 +707,11 @@ internal class ApprovedFeatureSourceContractTest : UiSourceContractFixture() {
         assertTrue(manager.contains("File(context.filesDir, \"skill_db\")"))
         assertTrue(manager.contains("fun catalog(): String"))
         assertFalse(manager.contains("active_skill"))
-        assertTrue(provider.contains("list_skill_files"))
-        assertTrue(provider.contains("read_skill_file"))
-        assertTrue(provider.contains("create_skill_file"))
-        assertTrue(provider.contains("edit_skill_file"))
-        assertTrue(provider.contains("delete_skill_file"))
+        assertTrue(provider.contains("skill_list"))
+        assertTrue(provider.contains("skill_read"))
+        assertTrue(provider.contains("skill_create"))
+        assertTrue(provider.contains("skill_edit"))
+        assertTrue(provider.contains("skill_delete"))
         assertFalse(provider.contains("update_active_skill"))
         assertTrue(builder.contains("skillCatalog = if (skillReadAccess) skillManager.catalog()"))
         // The prompt catalog is frozen once per Run with the captured template.

@@ -18,7 +18,7 @@ data class GenerationPromptTemplate(
     /**
      * Active memory read once when the template is captured, so every Provider pass of one Run
      * (initial request, tool continuations, retries) sees the same text and keeps the prompt
-     * cache stable. Mid-Run edits become visible through read_active_memory and land next Run.
+     * cache stable. Mid-Run edits become visible through active_memory_read and land next Run.
      */
     val activeMemory: String = "",
     /**
@@ -70,7 +70,7 @@ data class GenerationConfig(
 data class GenerationContext(
     val conversationId: String? = null,
     val subagentToolsEnabled: Boolean = false,
-    /** Exposes delete_agent; effective only together with [subagentToolsEnabled]. */
+    /** Exposes agent_delete; effective only together with [subagentToolsEnabled]. */
     val subagentDeleteEnabled: Boolean = false,
     val enabledModelIds: List<String> = emptyList(),
     /** Null and empty both allow no new subagents; global enabled IDs are not a fallback. */

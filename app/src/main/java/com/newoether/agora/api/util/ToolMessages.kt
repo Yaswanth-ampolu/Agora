@@ -263,7 +263,7 @@ fun projectToolResultImagesToUserMessage(
             // round-boundary path rebuild excludes the model message, so the description must
             // travel with the result rows).
             val descriptionBlock = transcriptionDescriptionsForBatch(batch)
-                ?.let { "\n\n--- Image Transcription: view_image ---\n$it" }
+                ?.let { "\n\n--- Image Transcription: file_view_image ---\n$it" }
                 .orEmpty()
             projected += ChatMessage(
                 // The id must not start with tool_ / result_ / compact_: provider serializers

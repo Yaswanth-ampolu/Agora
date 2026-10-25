@@ -34,7 +34,7 @@ class SubagentConcurrencyRejectTest {
             """{"name":"Rejected","model_id":"Provider:model","task":"Task"}""", f.context)
         assertTrue(result.isError)
         assertTrue(result.text.startsWith("Error: Subagent concurrency limit reached (4/4"))
-        assertTrue(result.text.contains("wait_agents"))
+        assertTrue(result.text.contains("agent_wait"))
         assertFalse(result.text.contains("\"started\""))
         assertEquals(before, f.children)
         coVerify(exactly = 4) { f.dao.upsertConversation(any()) }

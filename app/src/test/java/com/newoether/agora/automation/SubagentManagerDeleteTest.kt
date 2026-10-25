@@ -46,7 +46,7 @@ class SubagentManagerDeleteTest {
         val f = SubagentManagerTest.Fixture(backgroundScope)
         f.idleChild(resultId = "result", deliveredId = null)
         val error = runCatching { f.manager.delete("child", f.deleteContext) }.exceptionOrNull()
-        assertTrue(error?.message.orEmpty().contains("wait_agents"))
+        assertTrue(error?.message.orEmpty().contains("agent_wait"))
         assertTrue(f.deletedChildren.isEmpty())
         assertTrue("child" in f.children)
     }

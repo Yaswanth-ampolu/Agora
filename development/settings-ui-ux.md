@@ -383,7 +383,7 @@ in the existing editor. Source links retain the established external-link icon a
 - Disabling does not erase stored lists, hide existing navigation, stop children or discard completion
   delivery. Existing admitted work keeps its frozen context, like other tool-access preferences.
 - While delegation is enabled, the Subagents group shows a second whole-row switch, Allow Deleting
-  Subagents (Delete icon), default off, immediate save. It controls only the parent's `delete_agent`
+  Subagents (Delete icon), default off, immediate save. It controls only the parent's `agent_delete`
   tool (message-generation.md 8.14); manual deletion through the child's conversation menu is
   unaffected. Chinese copy is 允许删除子代理.
 - Capsule Display and Limits follow the Models group, in that order, outside the delegation-enabled

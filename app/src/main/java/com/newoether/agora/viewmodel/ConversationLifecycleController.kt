@@ -121,7 +121,7 @@ internal class ConversationLifecycleController(
     }
 
     /**
-     * Deletes an idle Subagent on its parent's delete_agent request. No client issued it, so every
+     * Deletes an idle Subagent on its parent's agent_delete request. No client issued it, so every
      * client still showing the child is told why and settles to the surviving parent. Unlike
      * [delete] this never stops work: a live Run, frozen submission, concurrent delete or changed
      * ownership rejects the request and leaves the child intact.

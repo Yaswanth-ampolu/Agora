@@ -143,7 +143,7 @@ text-recovery batch follows the same publication rule even though no earlier str
 The batch executor's later per-call running updates do not own creation visibility. UI placeholders,
 delays, retries, or shadow Tool state must not substitute for this overlay publication boundary.
 
-`generate_image` alone uses a 600,000 ms outer execution budget and the same 600,000 ms budget for
+`image_generate` alone uses a 600,000 ms outer execution budget and the same 600,000 ms budget for
 its generation request and returned-image download. Every other Tool keeps its ordinary configured
 execution timeout. A successful image is persisted through `ToolImageStore` and returned in the
 owning `ToolExecutionResult.images`; the overlay copies it to that exact Tool call and
@@ -152,7 +152,7 @@ message-level generated-image tail may own current output. Existing `ChatMessage
 read-compatible and retain their legacy full-width renderer, but new generated images never enter
 that path.
 
-The visible `generate_image` segment is a hard ordered presentation boundary in Compact, Grouped
+The visible `image_generate` segment is a hard ordered presentation boundary in Compact, Grouped
 Timeline, ordinary Timeline, and the Compact/Grouped Bottom Sheet presentation mode. Its current
 information card ends immediately after that call. The fixed left-aligned `300 x 300 dp` slot is
 rendered next, and every later image call, Tool, Thought, Transcription, or Answer starts after that
@@ -192,7 +192,7 @@ Remote `view_image` previews retain this exact presentation but admit their imag
 the Tool preview is expanded. The square viewport exists before the request starts and remains fixed
 through download and decode; the decoded image fades in without changing surrounding geometry.
 
-In the Tool detail Bottom Sheet, a `generate_image` result keeps the same `24 dp` outer horizontal
+In the Tool detail Bottom Sheet, an `image_generate` result keeps the same `24 dp` outer horizontal
 content padding as ordinary Tool text. Its rounded preview is centered and fills that padded content
 width as a `width x width` square. `ContentScale.Crop` center-crops only the source bitmap inside the
 square; it does not remove container margins or cap the square by sheet height. Arguments, labels,
@@ -203,7 +203,7 @@ Local Sandbox and Conch share one shell-tool baseline: foreground command/workdi
 bounded retained output and cancellation propagation; bounded typed `file_read`; 1MB UTF-8
 `file_write`; backend-native `file_edit`; and home-default glob/grep with the documented caps,
 truncation metadata, regex failures, and line-content bounds. Conch durable background jobs,
-foreground continuation after the client wait budget, and `view_image` are explicit extensions rather
+foreground continuation after the client wait budget, and `file_view_image` are explicit extensions rather
 than baseline behavior that Local must imitate. SSH may implement the transport-neutral interfaces,
 but it is not the authority for the Local/Conch baseline.
 

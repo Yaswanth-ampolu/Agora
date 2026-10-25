@@ -378,7 +378,7 @@ class GenerationManager(
                         conversationId = conversationId,
                         authorizedToolNames = providerConfig.tools.orEmpty()
                             .mapTo(linkedSetOf()) { it.function.name },
-                        // view_image results reuse this generation's transcription flow when
+                        // file_view_image results reuse this generation's transcription flow when
                         // image transcription is enabled for the current model.
                         toolImageTranscriber =
                             if (

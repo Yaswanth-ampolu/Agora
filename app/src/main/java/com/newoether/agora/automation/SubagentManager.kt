@@ -201,7 +201,7 @@ class SubagentManager(
             "Subagent is running or has queued messages; stop it or wait for it first"
         }
         check(child.subagentResultId == null || child.subagentResultId == child.subagentDeliveredResultId) {
-            "Subagent has an undelivered result; call wait_agents first"
+            "Subagent has an undelivered result; call agent_wait first"
         }
         check(deleteIdleChild(id, identity.conversationId)) {
             "Subagent could not be deleted because it is busy or already changed"

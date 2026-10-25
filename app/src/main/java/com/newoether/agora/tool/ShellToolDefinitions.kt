@@ -29,7 +29,7 @@ internal object ShellToolDefinitions {
         val serverPropDesc = if (allDeviceNames.size == 1) {
             "The shell server name (optional, defaults to the only available server: ${allDeviceNames[0]})."
         } else {
-            "The shell server name. Use list_shells to see available servers: $deviceNamesStr."
+            "The shell server name. Use shell_list to see available servers: $deviceNamesStr."
         }
         // timeout_ms is REQUIRED: the model must decide how long the tool call should wait. Conch
         // foreground execution is durable from the start, so expiry returns its job id without
@@ -43,12 +43,12 @@ internal object ShellToolDefinitions {
             .map { it.name.ifBlank { "Untitled" } }
         val shellTools = buildList {
             add(ToolDefinition(function = ToolFunction(
-                name = "list_shells",
+                name = "shell_list",
                 description = "List configured shell servers including the local sandbox (if enabled).",
                 parameters = ToolParameters(properties = emptyMap(), required = emptyList())
             )))
             add(ToolDefinition(function = ToolFunction(
-                name = "execute_shell_command",
+                name = "shell_exec",
                 description = "Execute a shell command with a 64KB UTF-8 command limit, a 32KB UTF-8 workdir limit, and at most 1MB of retained foreground output. Set background=true for a durable Conch job that survives client disconnects.",
                 parameters = ToolParameters(
                     properties = mapOf(
@@ -74,7 +74,7 @@ internal object ShellToolDefinitions {
                     listOf("server")
                 }
                 add(ToolDefinition(function = ToolFunction(
-                    name = "list_shell_jobs",
+                    name = "shell_job_list",
                     description = "List durable background shell jobs on a Conch server.",
                     parameters = ToolParameters(
                         properties = mapOf(
@@ -84,8 +84,8 @@ internal object ShellToolDefinitions {
                     ),
                 )))
                 add(ToolDefinition(function = ToolFunction(
-                    name = "get_shell_job",
-                    description = "Get status and bounded output for a durable Conch shell job. Prefer wait_for_job for blocking use.",
+                    name = "shell_job_get",
+                    description = "Get status and bounded output for a durable Conch shell job. Prefer shell_job_wait for blocking use.",
                     parameters = ToolParameters(
                         properties = mapOf(
                             "job_id" to ToolProperty("string", "The Conch job id."),
@@ -95,12 +95,12 @@ internal object ShellToolDefinitions {
                     ),
                 )))
                 add(ToolDefinition(function = ToolFunction(
-                    name = "wait_for_job",
-                    description = "Block until a durable Conch shell job finishes or timeout_ms elapses while updating one shell-style output block with bounded full cumulative snapshots. A timed-out result includes the current full retained output and leaves the job running; call wait_for_job again to keep waiting.",
+                    name = "shell_job_wait",
+                    description = "Block until a durable Conch shell job finishes or timeout_ms elapses while updating one shell-style output block with bounded full cumulative snapshots. A timed-out result includes the current full retained output and leaves the job running; call shell_job_wait again to keep waiting.",
                     parameters = ToolParameters(
                         properties = mapOf(
                             "job_id" to ToolProperty("string", "The Conch job id."),
-                            "timeout_ms" to ToolProperty("integer", "Required. Maximum time to block in milliseconds before returning (whether or not the job finished). The hard ceiling for a single call is ${ShellDurableJobExecutor.maxWaitMs(ctx)}ms; larger values are clamped to it and the result says so. To wait longer, call wait_for_job again."),
+                            "timeout_ms" to ToolProperty("integer", "Required. Maximum time to block in milliseconds before returning (whether or not the job finished). The hard ceiling for a single call is ${ShellDurableJobExecutor.maxWaitMs(ctx)}ms; larger values are clamped to it and the result says so. To wait longer, call shell_job_wait again."),
                             "server" to ToolProperty("string", jobServerDescription),
                             "tail_lines" to ToolProperty("integer", TAIL_LINES_DESCRIPTION),
                         ),
@@ -108,7 +108,7 @@ internal object ShellToolDefinitions {
                     ),
                 )))
                 add(ToolDefinition(function = ToolFunction(
-                    name = "stop_shell_job",
+                    name = "shell_job_stop",
                     description = "Stop a running durable Conch shell job and its process tree.",
                     parameters = ToolParameters(
                         properties = mapOf(
@@ -131,7 +131,7 @@ internal object ShellToolDefinitions {
         val fileTools = listOf(
             ToolDefinition(function = ToolFunction(
                 name = "file_read",
-                description = "Read a file from a shell server or local sandbox. Byte mode (default) returns a raw slice with content, line and byte counts, offset, limit, a truncated flag, and next_offset to continue. Line mode (start_line and/or max_lines) returns lines prefixed with their line numbers plus start_line, end_line, has_more and next_start_line; it scans at most 16MB from offset.",
+                description = "Read a disk file on a named shell server or Local Sandbox. For Agora internal memory entries, use memory_read. Byte mode (default) returns a raw slice with content, line and byte counts, offset, limit, a truncated flag, and next_offset to continue. Line mode (start_line and/or max_lines) returns lines prefixed with their line numbers plus start_line, end_line, has_more and next_start_line; it scans at most 16MB from offset.",
                 parameters = ToolParameters(
                     properties = mapOf(
                         "path" to ToolProperty("string", "Absolute path to the file."),
@@ -244,7 +244,7 @@ internal object ShellToolDefinitions {
             listOf(
                 ToolDefinition(
                     function = ToolFunction(
-                        name = "view_image",
+                        name = "file_view_image",
                         description =
                             "Load an image from a Conch device and return it as visual context.",
                         parameters = ToolParameters(

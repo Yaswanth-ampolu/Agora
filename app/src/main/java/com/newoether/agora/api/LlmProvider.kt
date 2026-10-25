@@ -96,8 +96,8 @@ fun interface ProviderRequestResolver {
     ): ProviderRequestInput
 }
 
-suspend fun ProviderConfig.resolveRequest(messages: List<ChatMessage>): ProviderRequestInput =
-    requestResolver?.resolve(messages, this)
+suspend fun ProviderConfig.resolveRequest(messages: List<ChatMessage>): ProviderRequestInput {
+    val resolved = requestResolver?.resolve(messages, this)
         ?: ProviderRequestInput(
             messages = prepareMessages(
                 messages,
@@ -109,6 +109,9 @@ suspend fun ProviderConfig.resolveRequest(messages: List<ChatMessage>): Provider
             ),
             systemPrompt = systemPrompt,
         )
+    // Custom request resolvers must obey the same wire-name compatibility boundary.
+    return resolved.copy(messages = com.newoether.agora.api.util.canonicalToolNames(resolved.messages))
+}
 
 data class ProviderConfig(
     val apiKey: String,

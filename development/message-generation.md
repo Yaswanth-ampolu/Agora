@@ -576,10 +576,10 @@ and error content. Inline text versus Markdown-file transport, share selection, 
 behavior remain transport/UI concerns and may not reintroduce private Thinking or tool payloads.
 
 ### 8.13 Conversation Todo tools
-`TodoToolProvider` exposes `read_todo` and `update_todo` through the ordinary tool executor for an
+`TodoToolProvider` exposes `todo_read` and `todo_update` through the ordinary tool executor for an
 opened conversation. One optional `conversations.todoJson` value owns the complete ordered list;
 it is conversation-scoped, not branch-scoped or reconstructed from tool history. Each item has
-nonblank `content` and a `pending`, `in_progress`, or `completed` status. `update_todo` replaces the
+nonblank `content` and a `pending`, `in_progress`, or `completed` status. `todo_update` replaces the
 whole list and an empty array clears it. Todo does not schedule automation or create a Task/Loop.
 The executor supplies the authorized `RunEffectIdentity`, never Provider arguments. A single Room
 statement accepts a mutation only for the exact conversation and live ACTIVE Run/pass, active slot
@@ -605,6 +605,23 @@ all questions in the call without delivering a tool result or queued message. No
 return immediately and retain their existing deferred-answer delivery without this timer. Settings
 changes affect future captured contexts only; no global timer, request state owner or restart is added.
 
+### 8.13b Built-in tool name compatibility
+
+Built-in definitions use namespace_action protocol names. `BuiltInToolNames` is the sole legacy alias
+map. Execution canonicalizes the called name and frozen authorized names before permission checks
+and provider dispatch. Historical Room rows stay unchanged. Immutable request projection canonicalizes
+call/result names, segment names and Responses function_call.name before validation, preserving IDs,
+arguments, results, signatures and opaque provider fields. Every provider, including custom request
+resolvers and local templates, consumes that projection. Native tool presentation accepts both names;
+external Remote tool names retain their external meaning. Internal localized resource keys are not
+protocol names and remain stable.
+
+Memory entries belong to Agora's named internal store, while file_* tools target device files.
+Memory read/edit path and missing-entry errors suggest file_read with server. Bare Markdown disk reads
+remain legal and receive an additive memory_read hint. Active-memory replace mode and its default,
+all argument schemas and edit operations remain unchanged. Only exact unmodified built-in prompt
+versions are migrated; custom prompts and stored conversation history are never renamed in place.
+
 ## 8.14 Isolated Subagents
 Subagents are ordinary conversations with indexed `parentConversationId` ownership, reachable through
 parent-family navigation and using the canonical generation, tools, Stop and branch pipelines.
@@ -629,9 +646,9 @@ as parent Run/pass authorization, child creation and settings transfer. Concurre
 Deleting a child frees total capacity; lowering the setting never deletes or stops existing children.
 The shared execution coordinator admits child generation using durable parent ownership across initial
 spawn, ordinary follow-up FIFO drain, direct/manual generation and continuations. Parent generation and
-unrelated families do not consume its allowance. `spawn_agent` atomically reserves an allowance before
-creating a child; at capacity it returns a tool error explaining the current count/limit and `wait_agents`,
-without creating a child, settings transfer, worker or waiting request. `send_agent_message` reserves the
+unrelated families do not consume its allowance. `agent_spawn` atomically reserves an allowance before
+creating a child; at capacity it returns a tool error explaining the current count/limit and `agent_wait`,
+without creating a child, settings transfer, worker or waiting request. `agent_send_message` reserves the
 same allowance before preparing or queueing a follow-up: an idle child's wake-up is rejected at capacity,
 while an already admitted child retains its existing allowance. The ordinary FIFO lease owns that
 reservation until durable admission transfers it to generation, or dismissal/disposal releases it; failed
@@ -639,7 +656,7 @@ claims retain it with the exact requeued input. Creation/preparation failure and
 untransferred reservations, including a worker cancelled before its lazy body starts.
 Existing workers retain one allowance across Compact/ordinary handoffs; nested generation reuses it.
 Release follows the canonical durable terminal and installed-Job barriers. The coordinator's admitted
-child IDs also drive list_agents/capsule running and the parent-list loading projection, including
+child IDs also drive agent_list/capsule running and the parent-list loading projection, including
 pre-Run wake-up and handoff gaps. Lowering concurrency leaves admitted work intact and rejects new
 tool-requested children until below the limit. Direct/manual generation and ordinary continuations keep
 their cancellation-safe event-driven admission; increasing the limit wakes those existing waiters.
@@ -650,12 +667,12 @@ message ID even after the streaming overlay is cleared; completion projection ne
 chronological message or partial answer for it. Failed completions apply the same
 error-text formatter and localized missing-detail fallback as the child timeline's gray terminal
 text, so hiding diagnostics in the receipt bubble never hides them from the parent model. Generated
-partial answers must not supply that fallback. list_agents demand-loads available
+partial answers must not supply that fallback. agent_list demand-loads available
 diagnostics only for its failed owned children; ordinary capsule observation stays payload-free.
-wait_agents exposes `error` and
+agent_wait exposes `error` and
 `error_code`; automatic completion queue messages include the same detail without replacing the
 answer or changing receipt identity. Legacy error-only text remains readable; partial answers alone
-must never be classified as error detail. read_conversation exposes each selected-branch message's
+must never be classified as error detail. conversation_read exposes each selected-branch message's
 message_id, status, run_id and run_sequence alongside text/time, and the same structured error detail
 when present. This does not authorize unrelated-owner reads, receipt replay or status inference from prose.
 Compact settlement is not a Subagent completion: it creates no completion outbox or parent-queue
@@ -667,14 +684,14 @@ Runs yielding to queued guidance or an ordinary continuation persist `CONTINUATI
 terminal reason. They remain closed Runs but cannot become Subagent completion results, even when
 their output is empty or partial and the delegation worker has already retired. Only the final
 non-continuation outcome may publish the task result.
-`spawn_agent`, `send_agent_message`, `wait_agents`, `list_agents`, `stop_agent` and `delete_agent`
-require an exact live parent Run/pass. `delete_agent` exists only when the frozen context also has
+`agent_spawn`, `agent_send_message`, `agent_wait`, `agent_list`, `agent_stop` and `agent_delete`
+require an exact live parent Run/pass. `agent_delete` exists only when the frozen context also has
 `subagentDeleteEnabled` (global default off). It never stops work: a child that is running, has a
 live Run, generation slot or queued messages, or holds an undelivered completion is rejected with
 an explicit error. Accepted deletion uses `ConversationLifecycleController`'s idle-Subagent path
 under the child's conversation lock with ownership rechecked at commit; every client still showing
 the child receives the localized parent-deletion notice and settles to the surviving parent.
-`send_agent_message` accepts follow-ups for idle or busy children through the
+`agent_send_message` accepts follow-ups for idle or busy children through the
 child's existing visible FIFO message queue and returns an explicit queued item receipt. Every
 model-originated spawn prompt and follow-up carries the existing `subagent` message source; manually
 typed child input carries no automatic source. This source distinction survives each separate FIFO

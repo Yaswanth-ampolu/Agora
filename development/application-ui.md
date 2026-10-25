@@ -1655,7 +1655,7 @@ rows show selectable literal content and accessible pending/in-progress/complete
 Both surfaces use RadioButtonUnchecked for pending, Schedule for in-progress and the filled
 CheckCircle for completed at 20dp/px; a standalone checkmark does not represent completed Todo status.
 There are no checkbox toggles, edits or browser mutation commands: only the model's ordinary
-`update_todo` tool changes the list. Closing a sheet does not modify it.
+`todo_update` tool changes the list. Closing a sheet does not modify it.
 Typography follows the existing interaction and detail surfaces rather than inherited defaults:
 the native capsule title is `titleSmall` with explicit Bold, its count is `labelMedium`, and the
 sheet title uses `ChatType.detailTitle` (22sp/28sp Bold). The native sheet count remains
@@ -1694,7 +1694,7 @@ individual 48dp/px Subagent capsules after Todo in the shared horizontal tools r
 gaps and the established titleSmall typography. Subagents keep ascending durable creation-time order;
 new children append after existing children, and message/title/status updates never reorder them.
 Equal creation times use the stable child ID as a deterministic tie-breaker. Native, WebUI and
-list_agents consume the same parent-scoped ordering. Each capsule has a 4dp-equivalent shadow, a small
+agent_list consume the same parent-scoped ordering. Each capsule has a 4dp-equivalent shadow, a small
 localized Subagent label above its name, and ordinary runtime status. Idle, successfully completed
 and SUBAGENT message-source markers use the same AccountTree branch icon, not a completion check;
 running uses the existing progress indicator, failed uses ErrorOutline and stopped uses PauseCircleOutline

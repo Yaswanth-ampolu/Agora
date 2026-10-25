@@ -14,7 +14,7 @@ The visible lifecycle is deliberately small. `CALLING` and `RUNNING` share one a
 
 An exit code is a command result, not a tool failure. A completed shell call with any exit code uses `Command returned <code>`. Only transport, protocol, server, rejection, or other failures that prevent a usable command result use the failed presentation.
 
-`wait_for_job` describes its own action after completion. Its card summary is `Waited for shell job <id>` when the ID is available. The exit code remains a compact detail status. Background summaries do not expose job IDs.
+`shell_job_wait` describes its own action after completion. Its card summary is `Waited for shell job <id>` when the ID is available. The exit code remains a compact detail status. Background summaries do not expose job IDs.
 
 Shell job `stopping` and `settling` are nonterminal background states. `stopped` and `interrupted` are terminal stopped presentations with distinct `Stopped` and `Interrupted` summaries. These server states use the existing terminal model; nonzero command exit codes are still usable results, not transport failures.
 
@@ -32,9 +32,9 @@ Known counts use locale-aware Android quantity resources, including singular res
 
 For memory and skill reads, effective `names` takes precedence over `name` exactly as in the provider. A single target shows its name; a batch shows `Reading/Read N files`. A streaming count is reliable only once its names array is complete. Independent `file_read` calls retain separate summaries. Empty file content and an empty conversation page explicitly say that no content/messages were returned, not ordinary completion.
 
-The active-memory reader is a distinct display target, not an ordinary saved memory file. Its title is `Read Active Memory`, its active summary is `Reading active memory…`, and its completed summary is `Read active memory`. Empty content and failures without a concrete reason also name active memory. Concrete failures still show the reason directly. This display distinction does not change the registered `read_active_memory` API, read target, execution lifecycle, or ordinary file-read summaries.
+The active-memory reader is a distinct display target, not an ordinary saved memory file. Its title is `Read Active Memory`, its active summary is `Reading active memory…`, and its completed summary is `Read active memory`. Empty content and failures without a concrete reason also name active memory. Concrete failures still show the reason directly. This display distinction does not change the registered `active_memory_read` API, read target, execution lifecycle, or ordinary file-read summaries.
 
-Memory/skill rename summaries show old and new names when known; description edits name the description action. `ask_user` distinguishes waiting for answers, queued questions, answered questions and skipped questions using actual returned facts. A mixed set shows answered count against returned question count without claiming every question was answered. Question outcomes are natural sentences with quantity grammar (`Answered 1 question`, `Answered 3 questions`, `Answered 2 of 3 questions`, `Skipped 2 questions`, `Queued 2 questions`), never label-colon-count text. `stop_loop` distinguishes a new stop from an already stopped Loop.
+Memory/skill rename summaries show old and new names when known; description edits name the description action. `ask_user` distinguishes waiting for answers, queued questions, answered questions and skipped questions using actual returned facts. A mixed set shows answered count against returned question count without claiming every question was answered. Question outcomes are natural sentences with quantity grammar (`Answered 1 question`, `Answered 3 questions`, `Answered 2 of 3 questions`, `Skipped 2 questions`, `Queued 2 questions`), never label-colon-count text. `loop_stop` distinguishes a new stop from an already stopped Loop.
 
 ## Detail Bodies
 Shell execute, get/wait and stop-job details use the same shell body, including stopped or interrupted

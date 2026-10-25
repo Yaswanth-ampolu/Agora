@@ -71,15 +71,15 @@ allows those tools.
 
 When `accessSkills` is true, the ordinary `GenerationToolExecutor` exposes exactly:
 
-- `list_skill_files`
-- `read_skill_file`
-- `create_skill_file`
-- `edit_skill_file`
-- `delete_skill_file`
+- `skill_list`
+- `skill_read`
+- `skill_create`
+- `skill_edit`
+- `skill_delete`
 
 Definitions, argument validation, multi-read formatting, exact-once patching, result JSON, timeout,
 accepted tool-batch identity, durable tool/result persistence, and error handling mirror the saved
-Memory tools. `edit_skill_file` requires an explicit `operation` of `replace`, `patch`, `rename`, or
+Memory tools. `skill_edit` requires an explicit `operation` of `replace`, `patch`, `rename`, or
 `describe`. The executor reads only the selected operation's value, so runtime-required empty
 placeholders for unrelated fields cannot create conflicting edits. Empty replacement content clears
 the file, an empty patch replacement deletes the unique match, and an empty description removes the

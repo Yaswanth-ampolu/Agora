@@ -141,7 +141,7 @@ class TranscriptionManager(
     }
 
     /**
-     * Describes one tool-result image (view_image) with the same provider resolution, prompt,
+     * Describes one tool-result image (file_view_image) with the same provider resolution, prompt,
      * config, and streaming loop as [transcribe] — but for a single image and without any
      * attachment-metadata persistence (tool images have no attachment row).
      *
