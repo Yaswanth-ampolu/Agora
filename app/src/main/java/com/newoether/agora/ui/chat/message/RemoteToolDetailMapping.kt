@@ -15,8 +15,9 @@ private fun parseRemoteToolDetail(
     if (source !in setOf("filo", "codex-desktop", "codex-cli", "claude-desktop", "claude-cli")) return null
     val tool = name?.removePrefix("functions/")?.removePrefix("functions.") ?: return null
     val arguments = rawArguments?.remoteObject()
-        ?: if (tool == "apply_patch" && rawArguments?.startsWith("*** Begin Patch") == true) {
-            buildJsonObject { put("patch", rawArguments) }
+        ?: if (tool == "apply_patch") {
+            val patch = (rawArguments?.remoteElement() as? JsonPrimitive)?.takeIf { it.isString }?.content ?: rawArguments
+            patch?.takeIf { it.startsWith("*** Begin Patch") }?.let { buildJsonObject { put("patch", it) } } ?: return null
         } else return null
     val active = state in setOf("calling", "running") || rawResult == null && state == null
     if (state == "stopped" || state == "failed" && tool !in remoteShellTools) return null
@@ -46,31 +47,37 @@ private fun parseRemoteToolDetail(
             } ?: return null
             if (commandValue is JsonArray) supplemental += buildJsonObject { put(commandKey, commandValue) }.toString()
             consumed += commandKey
-            val result = rawResult?.remoteObject()
+            val result = rawResult?.let(::remoteShellResult)
             val output: String?
             val exit: Int?
             if (result != null) {
                 if (result["error"]?.let { it !is JsonNull } == true ||
                     (result["failed"] as? JsonPrimitive)?.booleanOrNull == true) return null
-                val outputKeys = listOf("output", "aggregatedOutput", "stdout", "stderr")
-                if (outputKeys.any { result[it] != null && result[it] !is JsonNull && result.remoteString(it) == null }) return null
+                val outputKeys = listOf("output", "aggregatedOutput", "aggregated_output", "stdout", "stderr")
+                if (outputKeys.any { result[it] != null && result[it] !is JsonNull && result[it]?.remoteText() == null }) return null
                 val exitKey = if (result.containsKey("exit_code")) "exit_code" else "exitCode"
                 val exitValue = result[exitKey]
                 exit = if (exitValue == null || exitValue is JsonNull) null else
                     (exitValue as? JsonPrimitive)?.takeUnless { it.isString }?.intOrNull ?: return null
-                val selected = outputKeys.take(2).firstOrNull { result.remoteString(it) != null }
+                val selected = outputKeys.take(3).firstOrNull { result[it]?.remoteText() != null }
                 val usedKeys = if (selected != null) setOf(selected) else setOf("stdout", "stderr")
-                output = selected?.let { result.remoteString(it) }
-                    ?: listOfNotNull(result.remoteString("stdout"), result.remoteString("stderr")).joinToString("\n")
+                output = selected?.let { result[it]?.remoteText() }
+                    ?: listOfNotNull(result["stdout"]?.remoteText(), result["stderr"]?.remoteText()).joinToString("\n")
+                if (result != rawResult?.remoteElement() || outputKeys.any { result[it] is JsonObject || result[it] is JsonArray }) {
+                    rawResult?.let { supplemental += it }
+                }
                 if (outputKeys.none(result::containsKey) && exit == null) return null
                 JsonObject(result - usedKeys - exitKey).takeIf { it.isNotEmpty() }?.let { supplemental += it.toString() }
             } else {
-                if (rawResult?.trimStart()?.let { it.startsWith("{") || it.startsWith("[") } == true) return null
-                val match = rawResult?.let {
+                val decoded = rawResult?.remoteElement()
+                if (decoded is JsonObject || decoded is JsonArray ||
+                    decoded == null && rawResult?.trimStart()?.let { it.startsWith("{") || it.startsWith("[") } == true) return null
+                val literalResult = (decoded as? JsonPrimitive)?.takeIf { it.isString }?.content ?: rawResult
+                val match = literalResult?.let {
                     Regex("(?s)^(.*?Process exited with code (-?\\d+)\\r?\\n(?:.*?\\r?\\n)?Output:\\r?\\n)(.*)$").matchEntire(it)
                 }
                 exit = match?.groupValues?.get(2)?.toIntOrNull()
-                output = match?.groupValues?.get(3) ?: rawResult
+                output = match?.groupValues?.get(3) ?: literalResult
                 match?.groupValues?.get(1)?.let { supplemental += it }
             }
             if (state == "failed" && exit == null) return null
@@ -79,13 +86,21 @@ private fun parseRemoteToolDetail(
         }
         "Read", "read_file", "file_read" -> {
             val path = path() ?: return null
-            val result = if (tool == "Read") null else rawResult?.remoteObject()
-            if (tool != "Read" && result == null && rawResult?.trimStart()?.startsWith("{") == true) return null
-            val text = if (result != null) result.remoteString("content") ?: return null else rawResult
-            if (result != null) {
-                if (result["path"] != null && result.remoteString("path") != path) return null
-                JsonObject(result - setOf("content", "path")).takeIf { it.isNotEmpty() }?.let { supplemental += it.toString() }
+            val value = rawResult?.remoteElement()
+            val result = value as? JsonObject
+            val text = when {
+                result != null && result.remoteString("path")?.let { it != path } == true -> return null
+                result != null -> when {
+                    result.keys.any { it in setOf("content", "text") } ->
+                        result["content"]?.remoteText() ?: result["text"]?.remoteText() ?: return null
+                    else -> rawResult
+                }
+                value is JsonArray -> value.remoteText() ?: rawResult
+                value is JsonPrimitive && value.isString -> value.content
+                else -> rawResult
             }
+            if (result != null || value is JsonArray) rawResult?.let { supplemental += it }
+            if (value == null && rawResult?.trimStart()?.let { it.startsWith("{") || it.startsWith("[") } == true) return null
             val rows = text?.let(::remoteReadLines)
             detail(ToolKind.FILE_READ, if (text == null && active) ToolDetailBody.Active("", null)
                 else file(path, rows?.joinToString("\n") { it.text } ?: text ?: return null, rows))
@@ -135,11 +150,12 @@ private fun parseRemoteToolDetail(
             if (tool in setOf("Glob", "file_glob") && arguments.remoteString("pattern") == null) return null
             if (tool in setOf("LS", "list_dir") && arguments.remoteString("path") == null) return null
             if (rawResult == null) return if (active) detail(ToolKind.FILE_GLOB, ToolDetailBody.Active("", null)) else null
-            val result = rawResult.remoteObject()
-            val paths = if (result != null) {
-                val values = result["files"] as? JsonArray ?: return null
-                JsonObject(result - "files").takeIf { it.isNotEmpty() }?.let { supplemental += it.toString() }
-                values.map { (it as? JsonPrimitive)?.takeIf { it.isString }?.content ?: return null }
+            val result = rawResult.remoteResultObject()
+            val values = rawResult.remoteElement() as? JsonArray
+            val paths = if (result != null || values != null) {
+                val entries = values ?: result?.get("files") as? JsonArray ?: return null
+                supplemental += rawResult
+                entries.map { (it as? JsonPrimitive)?.takeIf { it.isString }?.content ?: return null }
             } else {
                 if (rawResult.trimStart().let { it.startsWith("{") || it.startsWith("[") }) return null
                 rawResult.lineSequence().filter(String::isNotBlank).toList()
@@ -197,7 +213,7 @@ private val remoteShellTools = setOf("Bash", "shell", "exec_command", "shell_com
 internal fun isRemoteShellTool(name: String): Boolean =
     name.removePrefix("functions/").removePrefix("functions.") in remoteShellTools
 internal fun JsonObject.remoteString(key: String): String? = (this[key] as? JsonPrimitive)?.takeIf { it.isString }?.content
-internal fun String.remoteObject(): JsonObject? = runCatching { Json.parseToJsonElement(this) as? JsonObject }.getOrNull()
+internal fun String.remoteObject(): JsonObject? = remoteElement() as? JsonObject
 
 private fun validRemoteGrepMatch(value: JsonElement): Boolean {
     val item = value as? JsonObject ?: return false

@@ -96,7 +96,12 @@ a failed activity stays failed even when its shell output and exit code can be r
 recognition selects the detail body without changing the recorded state. A nonzero exit code alone
 does not declare a failure when the source has not recorded one. Native failures and stopped results
 retain their evidence. A read removes a native line gutter only when every returned line supplies
-consecutive explicit line numbers.
+consecutive explicit line numbers. Known arguments/results may use nested JSON string
+envelopes, text content blocks, path arrays, Codex argv arrays, stdout/stderr or structured
+output wrappers. The read-only mapper unwraps only recognized shapes and retains their
+metadata as supplemental JSON. A Read of literal JSON file content preserves that content.
+Neither receive nor presentation code cuts serialized JSON; remote preview bounds belong
+to Filo's decoded-field projection. Unknown tools and invalid structures keep JSON fallback.
 
 ## Localization
 

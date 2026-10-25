@@ -570,8 +570,10 @@ actual model/effort. UNKNOWN keeps the draft editable and Send blocked; no retry
 button is added. Other sources retain text-only Snackbar delivery feedback and explicit fresh
 attempt semantics. Automatic input replay remains prohibited.
 
-Filo bounds conversation pages to 256KiB/128 records with explicit tool previews. Android
-limits SSE lines/HTTP bodies to 1MiB before UTF-8 allocation, including missing delimiters.
+Filo bounds conversation pages to 3MiB/128 records and complete response bodies to 4MiB.
+Tool arguments/results are decoded before leaf fields are limited (256KiB text target,
+384KiB serialized field cap); nested JSON strings remain parseable and truncation is marked.
+Android limits SSE lines/HTTP bodies to 4MiB before UTF-8 allocation, including missing delimiters.
 Retained payloads use a bounded cache with native replay bookmarks. Eviction cannot make
 any valid conversation permanently unenterable; both older and newer content remain readable.
 Long text parts preserve native identity, Unicode and internal whitespace. No larger heap or

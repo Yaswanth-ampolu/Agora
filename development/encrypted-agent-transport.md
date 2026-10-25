@@ -56,7 +56,10 @@ Agora's default Filo client requires this channel. Read requests may cache a ver
 server key and recover once using a fresh handshake. Mutations always perform a fresh
 handshake and have no automatic retry. Upload chunks are bounded at 256 KiB, the
 channel request at 512 KiB, and decrypted response chunks at 16 KiB. Images and event
-streams use the same incremental encrypted transport. There is no plaintext fallback.
+streams use the same incremental encrypted transport. Decrypted Filo application HTTP
+bodies and SSE lines are bounded at 4 MiB before UTF-8 allocation; conversation pages
+are at most 3 MiB. These application limits do not change channel frame/request limits.
+There is no plaintext fallback.
 Application fixture tests inject a plain local transport explicitly so they can test
 the API beneath encryption; production transport is covered by Go/Android fixtures.
 
