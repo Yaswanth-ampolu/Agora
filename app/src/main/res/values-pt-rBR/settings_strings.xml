@@ -84,7 +84,14 @@
     <string name="prompts_template_blank">Em branco</string>
     <string name="prompts_template_blank_desc">Começar com um prompt de sistema editável vazio.</string>
     <string name="prompts_template_default">Padrão</string>
-    <string name="prompts_template_default_desc">Usar o prompt padrão do Agora com contexto de execução, memória, busca na web, shell e regras de acesso a arquivos do dispositivo.</string>
+    <string name="template_variable_tool_guide_memory">Orientações das ferramentas de memória</string>
+    <string name="template_variable_tool_guide_skills">Orientações das ferramentas de habilidades</string>
+    <string name="template_variable_tool_guide_past_conversations">Orientações de conversas anteriores</string>
+    <string name="template_variable_tool_guide_web">Orientações das ferramentas da web</string>
+    <string name="template_variable_tool_guide_devices">Orientações das ferramentas de dispositivos</string>
+    <string name="template_variable_tool_guide_subagents_and_automation">Orientações de subagentes e automação</string>
+    <string name="template_variable_tool_guide_asking_the_user">Orientações para perguntar ao usuário</string>
+    <string name="prompts_template_default_desc">Usar as regras de resposta padrão do Agora e as orientações das ferramentas ativadas em cada solicitação.</string>
     <string name="prompts_duplicate">Duplicar</string>
     <string name="prompts_duplicate_title">Cópia de %1$s</string>
     <string name="prompts_empty_preview">Prompt vazio</string>

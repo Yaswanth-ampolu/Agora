@@ -97,7 +97,14 @@
     <string name="prompts_template_blank">Blank</string>
     <string name="prompts_template_blank_desc">Start with an empty editable system prompt.</string>
     <string name="prompts_template_default">Default</string>
-    <string name="prompts_template_default_desc">Use Agora\'s default prompt with runtime context, memory, web search, shell, and device-file guidance.</string>
+    <string name="template_variable_tool_guide_memory">Memory Tool Guidance</string>
+    <string name="template_variable_tool_guide_skills">Skill Tool Guidance</string>
+    <string name="template_variable_tool_guide_past_conversations">Past Conversation Guidance</string>
+    <string name="template_variable_tool_guide_web">Web Tool Guidance</string>
+    <string name="template_variable_tool_guide_devices">Device Tool Guidance</string>
+    <string name="template_variable_tool_guide_subagents_and_automation">Subagent and Automation Guidance</string>
+    <string name="template_variable_tool_guide_asking_the_user">Ask User Guidance</string>
+    <string name="prompts_template_default_desc">Use Agora\'s default response rules and guidance for the tools enabled in each request.</string>
     <string name="prompts_duplicate">Duplicate</string>
     <string name="prompts_duplicate_title">%1$s Copy</string>
     <string name="prompts_empty_preview">Empty prompt</string>

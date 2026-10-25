@@ -84,7 +84,14 @@
     <string name="prompts_template_blank">空白</string>
     <string name="prompts_template_blank_desc">空の編集可能なシステムプロンプトから始めます。</string>
     <string name="prompts_template_default">デフォルト</string>
-    <string name="prompts_template_default_desc">ランタイムコンテキスト、メモリ、Web 検索、シェル、デバイスファイルアクセスのルールを含む Agora のデフォルトプロンプトを使用します。</string>
+    <string name="template_variable_tool_guide_memory">メモリツールのガイド</string>
+    <string name="template_variable_tool_guide_skills">スキルツールのガイド</string>
+    <string name="template_variable_tool_guide_past_conversations">過去の会話のガイド</string>
+    <string name="template_variable_tool_guide_web">Web ツールのガイド</string>
+    <string name="template_variable_tool_guide_devices">デバイスツールのガイド</string>
+    <string name="template_variable_tool_guide_subagents_and_automation">サブエージェントと自動化のガイド</string>
+    <string name="template_variable_tool_guide_asking_the_user">ユーザーへの質問のガイド</string>
+    <string name="prompts_template_default_desc">Agora の標準の応答ルールと、各リクエストで有効なツールのガイドを使用します。</string>
     <string name="prompts_duplicate">複製</string>
     <string name="prompts_duplicate_title">%1$s のコピー</string>
     <string name="prompts_empty_preview">空のプロンプト</string>

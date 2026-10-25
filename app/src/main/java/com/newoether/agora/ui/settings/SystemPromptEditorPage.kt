@@ -58,6 +58,7 @@ import com.newoether.agora.ui.components.AgoraDropdownMenuItem
 import com.newoether.agora.ui.components.rememberUnsavedChangesBack
 import com.newoether.agora.ui.components.sheetOptionClickable
 
+@Composable
 private fun variableDisplayName(key: String): String = when (key) {
     PredefinedVariables.TIME -> "Current Time"
     PredefinedVariables.DATE -> "Current Date"
@@ -68,6 +69,13 @@ private fun variableDisplayName(key: String): String = when (key) {
     PredefinedVariables.CURRENT_MODEL_ID -> "Current Model ID"
     PredefinedVariables.MESSAGE_MODEL_ID -> "Message Model ID"
     PredefinedVariables.MODEL_ID -> "Current Model ID (Legacy)"
+    PredefinedVariables.TOOL_GUIDE_MEMORY -> stringResource(R.string.template_variable_tool_guide_memory)
+    PredefinedVariables.TOOL_GUIDE_SKILLS -> stringResource(R.string.template_variable_tool_guide_skills)
+    PredefinedVariables.TOOL_GUIDE_PAST_CONVERSATIONS -> stringResource(R.string.template_variable_tool_guide_past_conversations)
+    PredefinedVariables.TOOL_GUIDE_WEB -> stringResource(R.string.template_variable_tool_guide_web)
+    PredefinedVariables.TOOL_GUIDE_DEVICES -> stringResource(R.string.template_variable_tool_guide_devices)
+    PredefinedVariables.TOOL_GUIDE_SUBAGENTS_AND_AUTOMATION -> stringResource(R.string.template_variable_tool_guide_subagents_and_automation)
+    PredefinedVariables.TOOL_GUIDE_ASKING_THE_USER -> stringResource(R.string.template_variable_tool_guide_asking_the_user)
     PredefinedVariables.PROMPT -> "Prompt"
     else -> key
 }
@@ -382,28 +390,30 @@ fun SystemPromptEditorPage(
             )
             Spacer(modifier = Modifier.height(8.dp))
             val availableVars = if (selectedTab == 0) PredefinedVariables.ALL.filter { it !in PredefinedVariables.PER_MESSAGE_VARS } else PredefinedVariables.ALL
-            for (key in availableVars) {
-                SettingsItem(
-                    headlineContent = { Text(variableDisplayName(key)) },
-                    supportingContent = { Text("{${key}}") },
-                    leadingContent = {
-                        Icon(variableIcon(key), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    },
-                    startPadding = SETTINGS_ITEM_SHEET_PADDING,
-                    endPadding = SETTINGS_ITEM_SHEET_PADDING,
-                    modifier = Modifier.fillMaxWidth().sheetOptionClickable {
-                        val item = PromptTemplateItem(type = PromptItemType.PREDEFINED, value = key)
-                        if (targetIndex >= 0 && targetIndex <= currentItems.size) {
-                            currentItems.add(targetIndex, item)
-                        } else {
-                            currentItems.add(item)
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                for (key in availableVars) {
+                    SettingsItem(
+                        headlineContent = { Text(variableDisplayName(key)) },
+                        supportingContent = { Text("{${key}}") },
+                        leadingContent = {
+                            Icon(variableIcon(key), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        },
+                        startPadding = SETTINGS_ITEM_SHEET_PADDING,
+                        endPadding = SETTINGS_ITEM_SHEET_PADDING,
+                        modifier = Modifier.fillMaxWidth().sheetOptionClickable {
+                            val item = PromptTemplateItem(type = PromptItemType.PREDEFINED, value = key)
+                            if (targetIndex >= 0 && targetIndex <= currentItems.size) {
+                                currentItems.add(targetIndex, item)
+                            } else {
+                                currentItems.add(item)
+                            }
+                            showVariablePicker = false
+                            insertAtIndex = -1
                         }
-                        showVariablePicker = false
-                        insertAtIndex = -1
-                    }
-                )
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

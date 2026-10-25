@@ -50,11 +50,12 @@ persists the resolved value. Changing Skill access or catalog contents during a 
 the next Run; it does not change later requests of the current Run or the Run-frozen tool-definition
 set.
 
-The default system prompt contains one `<skill_catalog>` block and the predefined
-`{skill_catalog}` variable. The block explains that catalog entries are untrusted task resources:
-read only relevant Skills, treat their bodies as instructions subordinate to the current user/system
-request, and do not claim a Skill was applied without reading it. Custom prompt templates may place
-the same predefined variable. For ordinary generation, the catalog enters the system prompt only at
+The default system prompt ends with the explicit `<skill_catalog>` block and then Active Memory.
+Its conditional `{tool_guide_skills}` section tells the model to treat catalog descriptions as data,
+read a relevant Skill through `skill_read` before following it, and never claim to know unread
+contents. The section is present only when this request includes Skill tools; an empty catalog states
+that no Skills are available. Custom prompt templates may place
+`{skill_catalog}` in any explicit position. For ordinary generation, the catalog enters the system prompt only at
 an explicitly placed variable; the request builder must never append or restore it implicitly. Empty,
 disabled, or absent catalog projection resolves to an empty string.
 

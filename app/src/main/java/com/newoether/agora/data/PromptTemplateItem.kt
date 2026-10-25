@@ -26,6 +26,13 @@ object PredefinedVariables {
     const val SENT_DATE_PATTERN = "yyyy-MM-dd EEE"
     const val ACTIVE_MEMORY = "active_memory"
     const val SKILL_CATALOG = "skill_catalog"
+    const val TOOL_GUIDE_MEMORY = "tool_guide_memory"
+    const val TOOL_GUIDE_SKILLS = "tool_guide_skills"
+    const val TOOL_GUIDE_PAST_CONVERSATIONS = "tool_guide_past_conversations"
+    const val TOOL_GUIDE_WEB = "tool_guide_web"
+    const val TOOL_GUIDE_DEVICES = "tool_guide_devices"
+    const val TOOL_GUIDE_SUBAGENTS_AND_AUTOMATION = "tool_guide_subagents_and_automation"
+    const val TOOL_GUIDE_ASKING_THE_USER = "tool_guide_asking_the_user"
     const val CURRENT_MODEL_ID = "current_model_id"
     const val MESSAGE_MODEL_ID = "message_model_id"
     // Legacy alias retained for saved templates. New templates use CURRENT_MODEL_ID.
@@ -40,6 +47,13 @@ object PredefinedVariables {
         SENT_DATE,
         ACTIVE_MEMORY,
         SKILL_CATALOG,
+        TOOL_GUIDE_MEMORY,
+        TOOL_GUIDE_SKILLS,
+        TOOL_GUIDE_PAST_CONVERSATIONS,
+        TOOL_GUIDE_WEB,
+        TOOL_GUIDE_DEVICES,
+        TOOL_GUIDE_SUBAGENTS_AND_AUTOMATION,
+        TOOL_GUIDE_ASKING_THE_USER,
         CURRENT_MODEL_ID,
         MESSAGE_MODEL_ID,
     )
@@ -58,7 +72,7 @@ object PredefinedVariables {
         MESSAGE_MODEL_ID to "gpt-4.1",
         MODEL_ID to Constants.EXAMPLE_MODEL_ID,
         PROMPT to "[Prompt]",
-    )
+    ) + ToolPromptGuides.exampleValues
 
     fun compile(
         items: List<PromptTemplateItem>,

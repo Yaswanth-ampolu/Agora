@@ -824,6 +824,24 @@ Memory or Skill access may make the corresponding predefined variable resolvable
 authorized tools, but content enters the ordinary system prompt only where the user placed that
 variable. Removing a variable from the template must remove that content from the dispatched system
 prompt without a construction-layer fallback.
+The shipped default begins with fixed Response and Tools text, followed in order by explicit
+`{tool_guide_memory}`, `{tool_guide_skills}`, `{tool_guide_past_conversations}`, `{tool_guide_web}`,
+`{tool_guide_devices}`, `{tool_guide_subagents_and_automation}`, and `{tool_guide_asking_the_user}`
+variables, then the Skill catalog block and finally Active Memory. Each guide resolves to its stable
+English section only when at least one tool in that group is present in the actual request's function
+definitions; otherwise it resolves to the empty string, including its separator. Settings alone and
+external tools with similar names do not enable guides. Unrelated tools and definition order do not
+change section text. Compact's tool-disabled request resolves all guides to empty. Guide text is never
+injected outside explicit variables, and custom template whitespace remains verbatim.
+`ToolPromptGuides` owns section text and exact tool membership. `GenerationPromptRendering` compiles
+both request and preview values without changing stored items. `GenerationContextAccounting` uses
+the same tool-definition source as dispatch and resolves preview prompts before wrapper projection
+and fixed-cost/composition accounting. The request resolver consumes `ProviderConfig.tools` and uses
+one compiled prompt instance for rollout cost and wire output. The editor exposes every guide with
+localized labels and explicit preview values. Startup recognizes the exact post-tool-rename default
+as well as every older known default; any changed system text or User/Assistant wrapper prevents
+replacement. The historical math rule remains intact when reconstructing old versions.
+
 Every predefined variable in the structured System Prompt is late-bound for each actual outbound
 Provider API request. The stored template contains only ordered text and variable identities. Editing,
 saving, conversation creation, context preview, queue admission, Run/message graph admission, and

@@ -84,7 +84,14 @@
     <string name="prompts_template_blank">Пустой</string>
     <string name="prompts_template_blank_desc">Начать с пустого редактируемого системного промпта.</string>
     <string name="prompts_template_default">По умолчанию</string>
-    <string name="prompts_template_default_desc">Использовать промпт Agora по умолчанию с контекстом выполнения, памятью, веб-поиском, shell и правилами доступа к файлам устройства.</string>
+    <string name="template_variable_tool_guide_memory">Рекомендации для инструментов памяти</string>
+    <string name="template_variable_tool_guide_skills">Рекомендации для инструментов навыков</string>
+    <string name="template_variable_tool_guide_past_conversations">Рекомендации для прошлых разговоров</string>
+    <string name="template_variable_tool_guide_web">Рекомендации для веб-инструментов</string>
+    <string name="template_variable_tool_guide_devices">Рекомендации для инструментов устройств</string>
+    <string name="template_variable_tool_guide_subagents_and_automation">Рекомендации для субагентов и автоматизации</string>
+    <string name="template_variable_tool_guide_asking_the_user">Рекомендации для вопросов пользователю</string>
+    <string name="prompts_template_default_desc">Использовать стандартные правила ответов Agora и рекомендации для инструментов, включённых в каждом запросе.</string>
     <string name="prompts_duplicate">Дублировать</string>
     <string name="prompts_duplicate_title">Копия %1$s</string>
     <string name="prompts_empty_preview">Пустой промпт</string>

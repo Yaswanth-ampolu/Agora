@@ -85,7 +85,14 @@
     <string name="prompts_template_blank">空白</string>
     <string name="prompts_template_blank_desc">從空白的可編輯系統指令開始。</string>
     <string name="prompts_template_default">預設</string>
-    <string name="prompts_template_default_desc">使用 Agora 預設指令，包含執行階段上下文、記憶、網頁搜尋、Shell 和裝置檔案存取規則。</string>
+    <string name="template_variable_tool_guide_memory">記憶工具指南</string>
+    <string name="template_variable_tool_guide_skills">技能工具指南</string>
+    <string name="template_variable_tool_guide_past_conversations">歷史對話指南</string>
+    <string name="template_variable_tool_guide_web">網頁工具指南</string>
+    <string name="template_variable_tool_guide_devices">裝置工具指南</string>
+    <string name="template_variable_tool_guide_subagents_and_automation">子代理與自動化指南</string>
+    <string name="template_variable_tool_guide_asking_the_user">詢問使用者指南</string>
+    <string name="prompts_template_default_desc">使用 Agora 預設回覆規則，並依每次請求啟用的工具提供指南。</string>
     <string name="prompts_duplicate">複製</string>
     <string name="prompts_duplicate_title">%1$s 副本</string>
     <string name="prompts_empty_preview">空指令</string>

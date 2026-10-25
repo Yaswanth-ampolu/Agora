@@ -466,6 +466,16 @@ in the existing editor. Source links retain the established external-link icon a
   Filename and content `generatedAtMillis` derive from the same export instant.
   Existing format identifiers, extensions, MIME types and capture content remain unchanged.
 
+## System Prompt guide variables
+- The existing explicit-save System Prompt editor exposes all seven `tool_guide_*` variables in
+  its variable picker and selected-item rows, with localized display names in every locale. The
+  picker keeps the established sheet title, SettingsItem rows and spacing, and scrolls the variable
+  list within available height. Selection edits the draft only; Save and unsaved Back behavior stay
+  unchanged. Preview values are examples and are never written as resolved text.
+- Default template copy describes response rules and per-request enabled-tool guidance. The exact
+  template text, guide membership, ordering, migration and runtime ownership are defined by
+  message-generation.md 9.2.
+
 ## Copy and localization
 
 - All title-like UI copy follows the hard global capitalization contract in

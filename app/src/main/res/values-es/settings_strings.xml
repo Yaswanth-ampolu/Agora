@@ -84,7 +84,14 @@
     <string name="prompts_template_blank">En blanco</string>
     <string name="prompts_template_blank_desc">Empezar con una instrucción del sistema editable vacía.</string>
     <string name="prompts_template_default">Predeterminado</string>
-    <string name="prompts_template_default_desc">Usar la instrucción predeterminada de Agora con contexto de ejecución, memoria, búsqueda web, shell y reglas de acceso a archivos del dispositivo.</string>
+    <string name="template_variable_tool_guide_memory">Guía de herramientas de memoria</string>
+    <string name="template_variable_tool_guide_skills">Guía de herramientas de habilidades</string>
+    <string name="template_variable_tool_guide_past_conversations">Guía de conversaciones anteriores</string>
+    <string name="template_variable_tool_guide_web">Guía de herramientas web</string>
+    <string name="template_variable_tool_guide_devices">Guía de herramientas de dispositivos</string>
+    <string name="template_variable_tool_guide_subagents_and_automation">Guía de subagentes y automatización</string>
+    <string name="template_variable_tool_guide_asking_the_user">Guía para preguntar al usuario</string>
+    <string name="prompts_template_default_desc">Usar las reglas de respuesta predeterminadas de Agora y la guía de las herramientas activadas en cada solicitud.</string>
     <string name="prompts_duplicate">Duplicar</string>
     <string name="prompts_duplicate_title">Copia de %1$s</string>
     <string name="prompts_empty_preview">Instrucción vacía</string>

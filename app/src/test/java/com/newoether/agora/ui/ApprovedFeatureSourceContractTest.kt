@@ -697,6 +697,7 @@ internal class ApprovedFeatureSourceContractTest : UiSourceContractFixture() {
             root,
             "com/newoether/agora/viewmodel/GenerationRequestBuilder.kt",
         )
+        val rendering = source(root, "com/newoether/agora/viewmodel/GenerationPromptRendering.kt")
         val exporter = source(root, "com/newoether/agora/data/DataExporter.kt")
         val importer = source(root, "com/newoether/agora/data/DataImporter.kt")
         val settings = source(
@@ -716,8 +717,9 @@ internal class ApprovedFeatureSourceContractTest : UiSourceContractFixture() {
         assertTrue(builder.contains("skillCatalog = if (skillReadAccess) skillManager.catalog()"))
         // The prompt catalog is frozen once per Run with the captured template.
         assertTrue(builder.contains("val skillCatalog = if (settings.accessSkills.value) skillManager.catalog() else \"\""))
-        assertTrue(builder.contains("PredefinedVariables.SKILL_CATALOG to skillCatalog"))
-        assertTrue(builder.contains("skillCatalog = promptTemplate.skillCatalog"))
+        assertTrue(builder.contains(": ResolvedPrompt = resolveGenerationPromptTemplate("))
+        assertTrue(rendering.contains("PredefinedVariables.SKILL_CATALOG to skillCatalog"))
+        assertTrue(rendering.contains("skillCatalog = promptTemplate.skillCatalog"))
         assertFalse(builder.contains("effectiveSystemPromptWithSkills"))
         assertTrue(exporter.contains("memories/skill_db/"))
         assertTrue(importer.contains("memories/skill_db/"))

@@ -28,35 +28,9 @@ import com.newoether.agora.model.OpenAiServiceTiers
 import com.newoether.agora.model.apiModelName
 import com.newoether.agora.util.Constants
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-
-internal fun buildPromptRuntimeValues(
-    now: java.util.Date,
-    modelId: String,
-    activeMemory: String,
-    skillCatalog: String,
-): Map<String, String> {
-    val timeFormat = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US)
-    val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
-    val sentDateFormat = java.text.SimpleDateFormat(
-        PredefinedVariables.SENT_DATE_PATTERN,
-        java.util.Locale.US,
-    )
-    return mapOf(
-        PredefinedVariables.TIME to timeFormat.format(now),
-        PredefinedVariables.DATE to dateFormat.format(now),
-        PredefinedVariables.SENT_TIME to timeFormat.format(now),
-        PredefinedVariables.SENT_DATE to sentDateFormat.format(now),
-        PredefinedVariables.CURRENT_MODEL_ID to modelId,
-        PredefinedVariables.MESSAGE_MODEL_ID to "",
-        PredefinedVariables.MODEL_ID to modelId,
-        PredefinedVariables.ACTIVE_MEMORY to activeMemory,
-        PredefinedVariables.SKILL_CATALOG to skillCatalog,
-    )
-}
 
 /**
  * Stateless builder for the LLM generation request. Extracted from ChatViewModel.
@@ -680,7 +654,10 @@ class GenerationRequestBuilder(
         promptTemplate: GenerationPromptTemplate,
         activeModel: String,
     ): ProviderRequestResolver = ProviderRequestResolver { messages, providerConfig ->
-        val resolved = resolvePromptTemplate(promptTemplate, activeModel)
+        val resolved = resolvePromptTemplate(
+            promptTemplate, activeModel,
+            providerConfig.tools.orEmpty().mapTo(linkedSetOf()) { it.function.name },
+        )
         // One cost model per request: the fixed cost, the trimming and the indicator must agree.
         val costs = ContextCostModels.forModel(providerConfig.modelId)
         val fixedTokenCost = CostModelContextEstimator(costs).estimateFixed(
@@ -710,49 +687,10 @@ class GenerationRequestBuilder(
     private suspend fun resolvePromptTemplate(
         promptTemplate: GenerationPromptTemplate,
         activeModel: String,
-    ): ResolvedPrompt = withContext(Dispatchers.Default) {
-        coroutineScope {
-            val modelId = ModelId.parse(
-                providerRegistry.canonicalModelId(activeModel),
-            ).modelName
-            val runtimeValues = buildPromptRuntimeValues(
-                now = java.util.Date(),
-                modelId = modelId,
-                activeMemory = promptTemplate.activeMemory,
-                skillCatalog = promptTemplate.skillCatalog,
-            )
-            val perMessageValues = runtimeValues.filterKeys {
-                it !in PredefinedVariables.PER_MESSAGE_VARS
-            }
-
-            fun resolveMessageTemplate(items: List<com.newoether.agora.data.PromptTemplateItem>): Pair<String?, String?> {
-                val parts = PredefinedVariables.splitMessageTemplate(items)
-                val before = PredefinedVariables.compile(
-                    parts.beforePrompt,
-                    perMessageValues,
-                    emptyMap(),
-                ).takeIf(String::isNotEmpty)
-                val after = PredefinedVariables.compile(
-                    parts.afterPrompt,
-                    perMessageValues,
-                    emptyMap(),
-                ).takeIf(String::isNotEmpty)
-                return before to after
-            }
-
-            val userTemplate = resolveMessageTemplate(promptTemplate.userItems)
-            val assistantTemplate = resolveMessageTemplate(promptTemplate.assistantItems)
-            ResolvedPrompt(
-                systemPrompt = PredefinedVariables.compile(
-                    promptTemplate.systemItems,
-                    runtimeValues,
-                    emptyMap(),
-                ).takeIf(String::isNotEmpty),
-                userPrepend = userTemplate.first,
-                userPostpend = userTemplate.second,
-                assistantPrepend = assistantTemplate.first,
-                assistantPostpend = assistantTemplate.second,
-            )
-        }
-    }
+        toolNames: Set<String> = emptySet(),
+    ): ResolvedPrompt = resolveGenerationPromptTemplate(
+        promptTemplate = promptTemplate,
+        modelId = providerRegistry.canonicalModelId(activeModel),
+        toolNames = toolNames,
+    )
 }

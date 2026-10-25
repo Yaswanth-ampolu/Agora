@@ -3,9 +3,7 @@ package com.newoether.agora.viewmodel
 import android.app.Application
 import com.newoether.agora.util.DebugLog
 import com.newoether.agora.api.LlmProvider
-import com.newoether.agora.api.ProviderConfig
 import com.newoether.agora.api.StreamEvent
-import com.newoether.agora.api.resolveRequest
 import com.newoether.agora.data.CustomProviderConfig
 import com.newoether.agora.data.MemoryManager
 import com.newoether.agora.data.SkillManager
@@ -21,7 +19,6 @@ import com.newoether.agora.model.ToolCallData
 import com.newoether.agora.R
 import com.newoether.agora.service.AgoraForegroundService
 import com.newoether.agora.service.AppForegroundTracker
-import com.newoether.agora.api.util.ContextTokenEstimator
 import com.newoether.agora.api.util.tokens.FixedContextComposition
 import com.newoether.agora.tool.ToolProvider
 import com.newoether.agora.util.Constants
@@ -71,6 +68,7 @@ class GenerationManager(
             onConfirmShellCommand?.invoke(server, summary, conversationId) ?: true
         },
     )
+    private val contextAccounting = GenerationContextAccounting(toolExecutor)
     private val providerPassEffects = ProviderPassEffectExecutor()
     private val toolBatchEffects = GenerationToolBatchEffectExecutor(toolExecutor)
     private val toolRoundBuilder = GenerationToolRoundBuilder()
@@ -107,77 +105,22 @@ class GenerationManager(
         )
     }
 
-    internal fun fixedContextTokenCost(
-        config: GenerationConfig,
-        context: GenerationContext,
-    ): Int = ContextTokenEstimator.forModel(config.modelId).estimateFixed(
-        systemPrompt = config.effectiveSystemPrompt,
-        tools = if (config.lowContextModeEnabled) emptyList()
-        else toolExecutor.definitions(context),
-        initialUserPrompt = config.initialUserPrompt,
-        codeExecutionEnabled = config.codeExecutionEnabled,
-        googleSearchEnabled = config.googleSearchEnabled,
-        openAiWebSearchEnabled = config.openAiWebSearchEnabled,
-    )
-    /** The same cost as [fixedContextTokenCost], split for the context indicator. */
+    internal fun fixedContextTokenCost(config: GenerationConfig, context: GenerationContext): Int =
+        contextAccounting.fixedContextTokenCost(config, context)
+
     internal fun fixedContextComposition(
         config: GenerationConfig,
         context: GenerationContext,
-    ): FixedContextComposition =
-        ContextTokenEstimator.forModel(config.modelId).estimateFixedComposition(
-            systemPrompt = config.effectiveSystemPrompt,
-            tools = if (config.lowContextModeEnabled) emptyList()
-            else toolExecutor.definitions(context),
-            initialUserPrompt = config.initialUserPrompt,
-            codeExecutionEnabled = config.codeExecutionEnabled,
-            googleSearchEnabled = config.googleSearchEnabled,
-            openAiWebSearchEnabled = config.openAiWebSearchEnabled,
-        )
+    ): FixedContextComposition = contextAccounting.fixedContextComposition(config, context)
 
-    internal fun includesAssistantReasoning(
-        config: GenerationConfig,
-        context: GenerationContext,
-    ): Boolean =
-        !config.responsesApiEnabled &&
-            config.thinkingEnabled &&
-            (
-                config.providerName == Constants.PROVIDER_DEEPSEEK ||
-                    com.newoether.agora.api.openai.isDeepSeekModel(config.modelId)
-                ) &&
-            !config.lowContextModeEnabled &&
-            toolExecutor.definitions(context).isNotEmpty()
+    internal fun includesAssistantReasoning(config: GenerationConfig, context: GenerationContext): Boolean =
+        contextAccounting.includesAssistantReasoning(config, context)
 
-    internal suspend fun resolvedFixedContextTokenCost(
-        config: GenerationConfig,
-        context: GenerationContext,
-    ): Int {
-        val resolver = config.requestResolver ?: return fixedContextTokenCost(config, context)
-        val definitions = if (config.lowContextModeEnabled) emptyList()
-        else toolExecutor.definitions(context)
-        val providerConfig = ProviderConfig(
-            apiKey = config.apiKey,
-            modelId = config.modelId,
-            anthropicCacheEnabled = config.anthropicCacheEnabled,
-            anthropicCacheTtl = config.anthropicCacheTtl,
-            maxContextWindow = config.maxContextWindow,
-            codeExecutionEnabled = config.codeExecutionEnabled,
-            googleSearchEnabled = config.googleSearchEnabled,
-            openAiWebSearchEnabled = config.openAiWebSearchEnabled,
-            tools = definitions,
-            includeImages = !context.imageTranscriptionEnabled,
-            includeAssistantReasoning = includesAssistantReasoning(config, context),
-            requestResolver = resolver,
-        )
-        val resolvedRequest = providerConfig.resolveRequest(emptyList())
-        return ContextTokenEstimator.forModel(config.modelId).estimateFixed(
-            systemPrompt = resolvedRequest.systemPrompt,
-            tools = definitions,
-            initialUserPrompt = config.initialUserPrompt,
-            codeExecutionEnabled = config.codeExecutionEnabled,
-            googleSearchEnabled = config.googleSearchEnabled,
-            openAiWebSearchEnabled = config.openAiWebSearchEnabled,
-        )
-    }
+    internal suspend fun resolveContextPrompt(config: GenerationConfig, context: GenerationContext): GenerationConfig =
+        contextAccounting.resolveContextPrompt(config, context)
+
+    internal suspend fun resolvedFixedContextTokenCost(config: GenerationConfig, context: GenerationContext): Int =
+        contextAccounting.resolvedFixedContextTokenCost(config, context)
 
     internal suspend fun buildApiPath(request: GenerationApiPathRequest): GenerationApiPath =
         apiPathBuilder.build(request)
