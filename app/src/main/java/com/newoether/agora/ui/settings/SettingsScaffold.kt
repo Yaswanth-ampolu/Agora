@@ -249,7 +249,7 @@ fun CollapsingSettingsScaffold(
     }
 }
 
-/** Optional pull-to-refresh around a lazy settings list; the indicator drops in below the bar. */
+/** Optional pull-to-refresh; its indicator drops from the page top above the title and content. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SettingsPullRefresh(
@@ -313,44 +313,44 @@ fun CollapsingSettingsLazyScaffold(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        SettingsPullRefresh(refreshing, onRefresh, statusBarTop + SettingsBarHeight) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxHeight()
-                .widthIn(max = SettingsContentMaxWidth)
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .imePadding()
-                .clearFocusOnTap()
-                .padding(horizontal = contentHorizontalPadding),
-            contentPadding = PaddingValues(top = statusBarTop + SettingsBarHeight)
-        ) {
-            item { Spacer(modifier = Modifier.height(titleAreaHeight)) }
-            content()
-            item { Spacer(modifier = Modifier.height(contentBottomPadding)) }
-        }
-        }
-        CollapsingSettingsTitleBar(
-            title = title,
-            backDescription = stringResource(R.string.back),
-            fraction = fraction,
-            statusBarTop = statusBarTop,
-            titleAreaHeight = titleAreaHeight,
-            titleTravel = titleTravel,
-            onBack = onBack,
-            actions = actions
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(bottom = 16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            floatingActionButton()
+        SettingsPullRefresh(refreshing, onRefresh, statusBarTop) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxHeight()
+                    .widthIn(max = SettingsContentMaxWidth)
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .imePadding()
+                    .clearFocusOnTap()
+                    .padding(horizontal = contentHorizontalPadding),
+                contentPadding = PaddingValues(top = statusBarTop + SettingsBarHeight)
+            ) {
+                item { Spacer(modifier = Modifier.height(titleAreaHeight)) }
+                content()
+                item { Spacer(modifier = Modifier.height(contentBottomPadding)) }
+            }
+            CollapsingSettingsTitleBar(
+                title = title,
+                backDescription = stringResource(R.string.back),
+                fraction = fraction,
+                statusBarTop = statusBarTop,
+                titleAreaHeight = titleAreaHeight,
+                titleTravel = titleTravel,
+                onBack = onBack,
+                actions = actions
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(bottom = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                floatingActionButton()
+            }
         }
     }
 }

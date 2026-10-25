@@ -109,25 +109,38 @@ function ToolCodeArgument({ code }) {
 }
 
 function ToolDiff({ body }) {
-  const sign = { removed: "-", added: "+", context: " " };
-  return html`<div class="tool-meta-row tool-file-meta">
-      <${ToolPath} path=${body.path} /><${ToolPill} text=${body.editCount} />
-    </div>
-    <div class="tool-diff-hunks">
-      ${body.hunks.map((hunk, index) => html`<div key=${index}>
-        ${(hunk.index != null || hunk.replaceAll) && html`<div class="tool-meta-row tool-diff-meta">
-          ${hunk.index != null && html`<${ToolPill} text=${`#${hunk.index}`} />`}
-          ${hunk.replaceAll && html`<${ToolPill} text=${body.replaceAllLabel} emphasized />`}
-        </div>`}
-        <div class="tool-output tool-diff">
-          ${hunk.lines.map((line, i) => html`<div class=${`tool-diff-line ${line.kind}`} key=${i}>
-            <span class="tool-diff-sign" aria-hidden="true">${sign[line.kind] ?? " "}</span>
-            <span class="tool-code">${line.text}</span>
-          </div>`)}
+  return html`${body.files?.length ? html`<div class="tool-grep">
+      ${body.files.map((file, index) => html`<div key=${index}>
+        <div class="tool-meta-row tool-file-meta">
+          <${ToolPath} path=${file.path} /><${ToolPill} text=${file.operationLabel} />
         </div>
+        ${file.moveTo && html`<div class="tool-file-meta"><${ToolPath} path=${file.moveTo} /></div>`}
+        <${ToolDiffHunks} hunks=${file.hunks} replaceAllLabel=${body.replaceAllLabel} />
       </div>`)}
-    </div>
+    </div>` : html`
+      <div class="tool-meta-row tool-file-meta">
+        <${ToolPath} path=${body.path} /><${ToolPill} text=${body.editCount} />
+      </div>
+      <${ToolDiffHunks} hunks=${body.hunks} replaceAllLabel=${body.replaceAllLabel} />`}
     <div class="tool-muted tool-gap">${body.status}</div>`;
+}
+
+function ToolDiffHunks({ hunks, replaceAllLabel }) {
+  const sign = { removed: "-", added: "+", context: " " };
+  return html`<div class="tool-diff-hunks">
+    ${hunks.map((hunk, index) => html`<div key=${index}>
+      ${(hunk.index != null || hunk.replaceAll) && html`<div class="tool-meta-row tool-diff-meta">
+        ${hunk.index != null && html`<${ToolPill} text=${`#${hunk.index}`} />`}
+        ${hunk.replaceAll && html`<${ToolPill} text=${replaceAllLabel} emphasized />`}
+      </div>`}
+      <div class="tool-output tool-diff">
+        ${hunk.lines.map((line, i) => html`<div class=${`tool-diff-line ${line.kind}`} key=${i}>
+          <span class="tool-diff-sign" aria-hidden="true">${sign[line.kind] ?? " "}</span>
+          <span class="tool-code">${line.text}</span>
+        </div>`)}
+      </div>
+    </div>`)}
+  </div>`;
 }
 
 function ToolBody({ body }) {

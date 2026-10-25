@@ -77,7 +77,9 @@ internal data class RemoteModel(
     val reasoningEfforts: List<String>? = null, val defaultReasoningEffort: String? = null,
     val serviceTiers: List<RemoteServiceTier>? = null, val defaultServiceTier: String? = null,
 ) {
-    val displayName: String get() = name.takeIf(String::isNotBlank) ?: inferModelAlias(id)
+    fun displayName(family: String): String = name.takeIf(String::isNotBlank)?.let {
+        if (family == "codex") it.replace('-', ' ') else it
+    } ?: inferModelAlias(id)
 }
 @Serializable
 internal data class RemoteServiceTier(val id: String, val name: String, val description: String = "")

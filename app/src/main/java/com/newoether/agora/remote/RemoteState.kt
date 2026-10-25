@@ -107,6 +107,15 @@ internal data class RemoteState(
         draftSettings.model ?: models.firstOrNull { it.isDefault }?.id
     } else runtime?.model ?: lastKnownModel
     val settingsModel: RemoteModel? get() = models.firstOrNull { it.id == selectedModel }
+    val effortChoices: List<String> get() = when {
+        settingsModel != null -> settingsModel?.reasoningEfforts.orEmpty()
+        // Claude's session request API supports named efforts independently of model discovery.
+        !isDraft && selectedAdapter.family == "claude" && "effort" in capabilities.settings ->
+            models.flatMap { it.reasoningEfforts.orEmpty() }.distinct().ifEmpty {
+                listOf("low", "medium", "high", "xhigh", "max")
+            }
+        else -> emptyList()
+    }
     val settingsKey: String? get() = accessOwner?.let {
         if (selectedAdapter.legacy) it else "${owner}/@settings/$it"
     }
@@ -130,10 +139,10 @@ internal data class RemoteState(
         !controlling && !controlPending && !isStopping && attempts[owner]?.delivery !in
             setOf(RemoteDelivery.SUBMITTING, RemoteDelivery.ACCEPTED, RemoteDelivery.UNKNOWN)
     val canChooseModel: Boolean get() = capabilities.models && "model" in capabilities.settings && canControlSettings && !settingsPending
-    val canEditSettings: Boolean get() = canControlSettings && settingsModel != null
+    val canEditSettings: Boolean get() = canControlSettings && (settingsModel != null || effortChoices.isNotEmpty())
     val historyBounded: Boolean get() = !selectedAdapter.legacy && capabilities.historyMode == "bounded"
     val canRead: Boolean get() = selectedAdapter.capabilities.history
-    val canCreate: Boolean get() = selectedAdapter.capabilities.create
+    val canCreate: Boolean get() = selectedAdapter.origin != "cli" && selectedAdapter.capabilities.create
     val canSend: Boolean get() = if (isDraft) canCreate else if (runtime?.isRunning == true)
         capabilities.activeSend == "native-steer" else capabilities.idleSend
     val canStop: Boolean get() = capabilities.stop && runtime?.activeTurnId != null

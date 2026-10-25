@@ -17,7 +17,7 @@ class RemoteToolFileChangesTest {
     private fun mapped(input: String, source: String = "codex-cli", result: String? = input) =
         mapRemoteToolDetail(source, "file_edit", input, result, "succeeded")
     private fun lines(body: ToolDetailBody.Edit, kind: ToolDetailDiffKind) =
-        body.hunks.flatMap { it.lines }.filter { it.kind == kind }.map { it.text }
+        (body.hunks + body.files.flatMap { it.hunks }).flatMap { it.lines }.filter { it.kind == kind }.map { it.text }
 
     @Test fun codexAddedFileWithLiteralContentsUsesAddedLines() {
         val content = "import pathlib\n+literal_prefix\n\nprint(\"<value>\")\n"
@@ -40,7 +40,10 @@ class RemoteToolFileChangesTest {
                 val body = mapped(input)!!.body as ToolDetailBody.Edit
                 assertEquals(listOf("--- literal", "+++ literal", "@@ literal", ""), lines(body, expectedKind))
                 assertTrue(lines(body, if (operation == "add") ToolDetailDiffKind.REMOVED else ToolDetailDiffKind.ADDED).isEmpty())
-                assertTrue(body.hunks.single().lines.first().text.contains(if (operation == "add") "Add File" else "Delete File"))
+                val file = body.files.single()
+                assertEquals(if (operation == "add") ToolDetailEditOperation.ADD else ToolDetailEditOperation.DELETE, file.operation)
+                assertEquals("a.kt", file.path.name)
+                assertTrue(file.hunks.single().lines.none { it.kind == ToolDetailDiffKind.CONTEXT })
             }
         }
     }
@@ -48,8 +51,10 @@ class RemoteToolFileChangesTest {
     @Test fun emptyAddedAndDeletedFilesStillHaveAnOperationAndPath() {
         for (operation in listOf("add", "delete")) {
             val body = mapped(arguments(change(JsonPrimitive(operation), "", "empty.kt")))!!.body as ToolDetailBody.Edit
-            assertEquals(1, body.hunks.single().lines.size)
-            assertTrue(body.hunks.single().lines.single().text.endsWith("empty.kt"))
+            val file = body.files.single()
+            assertTrue(file.hunks.isEmpty())
+            assertEquals("empty.kt", file.path.name)
+            assertEquals(if (operation == "add") ToolDetailEditOperation.ADD else ToolDetailEditOperation.DELETE, file.operation)
         }
     }
 
@@ -64,10 +69,10 @@ class RemoteToolFileChangesTest {
             val body = mapped(arguments(value))!!.body as ToolDetailBody.Edit
             assertEquals(listOf("old"), lines(body, ToolDetailDiffKind.REMOVED))
             assertEquals(listOf("new"), lines(body, ToolDetailDiffKind.ADDED))
-            val context = lines(body, ToolDetailDiffKind.CONTEXT)
-            assertTrue(context.contains("kept"))
-            assertTrue(context.contains("--- a/old.kt"))
-            assertEquals(index < 2, context.contains("*** Move to: new.kt"))
+            assertEquals(listOf("kept"), lines(body, ToolDetailDiffKind.CONTEXT))
+            assertEquals(if (index < 2) ToolDetailPath("new.kt", null) else null, body.files.single().moveTo)
+            assertEquals(if (index < 2) ToolDetailEditOperation.MOVE else ToolDetailEditOperation.UPDATE,
+                body.files.single().operation)
         }
     }
 
@@ -81,8 +86,10 @@ class RemoteToolFileChangesTest {
         val detail = mapped(input, result = result)!!
         val body = detail.body as ToolDetailBody.Edit
         assertNull(body.path)
-        assertEquals(listOf("*** Add File: new.kt", "*** Delete File: gone.kt", "*** Update File: updated.kt"),
-            body.hunks.map { it.lines.first().text })
+        assertEquals(listOf("new.kt", "gone.kt", "updated.kt"), body.files.map { it.path.name })
+        assertEquals(listOf(ToolDetailEditOperation.ADD, ToolDetailEditOperation.DELETE, ToolDetailEditOperation.UPDATE),
+            body.files.map { it.operation })
+        assertTrue(body.hunks.isEmpty())
         assertEquals(listOf("created", "after"), lines(body, ToolDetailDiffKind.ADDED))
         assertEquals(listOf("removed", "before"), lines(body, ToolDetailDiffKind.REMOVED))
         assertEquals("{\"receipt\":\"retained\"}", detail.supplemental.single())

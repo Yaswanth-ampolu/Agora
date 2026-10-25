@@ -146,4 +146,8 @@
     <plurals name="tool_listed_mcp_servers">
         <item quantity="other">已列出 %1$d 個 MCP 伺服器</item>
     </plurals>
+    <string name="tool_edit_operation_update">更新</string>
+    <string name="tool_edit_operation_add">新增</string>
+    <string name="tool_edit_operation_delete">刪除</string>
+    <string name="tool_edit_operation_move">移動</string>
 </resources>

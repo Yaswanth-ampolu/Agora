@@ -263,13 +263,15 @@ class RemoteEmptyConversationTest {
         compose.onNodeWithText(text(R.string.retry)).assertDoesNotExist()
     }
 
-    @Test fun cliRetryRetainsFailedHeadlineAndRetryUntilGatewayCheckSettles() {
+    @Test fun cliExistingRetryRetainsUnavailableHeadlineUntilNativeSourceConnects() {
         val cli = RemoteAdapter("codex-cli", "codex", "cli", "disconnected",
             capabilities = RemoteCapabilities(create = true, history = true))
-        state = state.copy(devices = state.devices.map { it.copy(multiAdapter = true, adapters = listOf(cli),
-            status = RemoteDeviceStatus.ERROR) })
+        state = state.copy(draftSessionId = null, hydrationEnabled = true,
+            devices = state.devices.map { it.copy(multiAdapter = true, adapters = listOf(cli),
+                status = RemoteDeviceStatus.ERROR) })
         show()
-        compose.onNodeWithTag("remote-welcome-headline").assertTextEquals(text(R.string.remote_empty_offline_hint))
+        compose.onNodeWithTag("remote-welcome-headline").assertTextEquals(
+            RuntimeEnvironment.getApplication().getString(R.string.remote_source_no_session, "Codex CLI"))
         val bounds = compose.onNodeWithText(text(R.string.retry)).getUnclippedBoundsInRoot()
         compose.runOnIdle {
             state = state.copy(loading = true,
@@ -277,14 +279,16 @@ class RemoteEmptyConversationTest {
         }
         repeat(4) {
             compose.mainClock.advanceTimeBy(64)
-            compose.onNodeWithTag("remote-welcome-headline").assertTextEquals(text(R.string.remote_empty_offline_hint))
+            compose.onNodeWithTag("remote-welcome-headline").assertTextEquals(
+                RuntimeEnvironment.getApplication().getString(R.string.remote_source_no_session, "Codex CLI"))
             compose.onNodeWithText("Codex CLI").assertDoesNotExist()
             compose.onNodeWithText(text(R.string.retry)).assertIsNotEnabled()
             assertEquals(bounds, compose.onNodeWithText(text(R.string.retry)).getUnclippedBoundsInRoot())
         }
         compose.runOnIdle {
             state = state.copy(loading = false,
-                devices = state.devices.map { it.copy(status = RemoteDeviceStatus.CONNECTED) })
+                devices = state.devices.map { it.copy(status = RemoteDeviceStatus.CONNECTED,
+                    adapters = listOf(cli.copy(state = "connected"))) })
         }
         compose.onNodeWithTag("remote-welcome-headline").assertTextEquals("Codex CLI")
         compose.onNodeWithText(text(R.string.retry)).assertDoesNotExist()

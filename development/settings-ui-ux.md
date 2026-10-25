@@ -31,6 +31,9 @@ layout, states, density, or interaction design has been approved.
 - Every full-screen Settings surface uses `CollapsingSettingsScaffold` or
   `CollapsingSettingsLazyScaffold` so it has the established collapsing large
   heading. Do not replace it with a page-local top bar or title treatment.
+- Pull-to-refresh in the shared lazy scaffold drops its indicator from the safe page top, above
+  the collapsing heading, toolbar and list. The refresh container encloses those layers so the
+  Material indicator is drawn last; do not offset its entry below the toolbar.
 - Organize content into named categories with `SettingsGroup`. Standard cards use
   `SettingsItem` and contain a leading icon, a title, and a supporting
   description. Omitting any of those elements requires an explicit approved

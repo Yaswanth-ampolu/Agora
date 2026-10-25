@@ -146,4 +146,8 @@
     <plurals name="tool_listed_mcp_servers">
         <item quantity="other">Đã liệt kê %1$d máy chủ MCP</item>
     </plurals>
+    <string name="tool_edit_operation_update">Cập nhật</string>
+    <string name="tool_edit_operation_add">Thêm</string>
+    <string name="tool_edit_operation_delete">Xóa</string>
+    <string name="tool_edit_operation_move">Di chuyển</string>
 </resources>

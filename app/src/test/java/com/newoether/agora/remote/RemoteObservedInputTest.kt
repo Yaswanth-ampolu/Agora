@@ -105,6 +105,72 @@ class RemoteObservedInputTest {
         }
     }
 
+    @Test fun claudeResolvedModelKeepsEffortWritableWithoutGuessingAnAliasOrClaimingApplied() = runTest {
+        for ((id, origin) in listOf("claude-code" to "cli", "claude-desktop" to "desktop")) {
+            val initial = initial()
+            val caps = RemoteCapabilities(history = true, live = true, idleSend = true,
+                activeSend = "native-steer", stop = true, settings = listOf("effort"))
+            val source = initial.selectedAdapter.copy(id = id, origin = origin, capabilities = caps)
+            val state = MutableStateFlow(initial.copy(
+                devices = initial.devices.map { it.copy(adapters = listOf(source)) },
+                adapterSelections = mapOf("device" to id),
+                session = initial.session!!.copy(access = initial.session.access!!.copy(capabilities = caps)),
+                models = emptyList(),
+                runtime = RemoteRuntime("active", "native-turn", "deepseek-v4-pro[1m]", effort = "high"),
+            ))
+            val client = mockk<FiloClient>()
+            val pending = RemoteSettingsChange("change", "pending", RemoteSettings(effort = "low"))
+            coEvery { client.updateSettings(any(), any()) } returns Unit
+            coEvery { client.conversation(any(), any()) } returns RemoteConversationPage(emptyList(), null,
+                emptyList(), runtime = state.value.runtime!!.copy(settingsChange = pending))
+            val mutation = RemoteSettingsMutation(backgroundScope, state, { client }, { client }, { _, _ -> true },
+                { 1 }, { 1 }, { _, _, _, page -> state.value = state.value.copy(runtime = page.runtime) }, {},
+                { fail("Valid pending effort must not report failure"); null })
+            assertNull(state.value.settingsModel)
+            assertTrue(state.value.canEditSettings)
+            mutation.setThinkingLevel("none")
+            mutation.setThinkingLevel("invented")
+            mutation.setServiceTier("fast")
+            runCurrent()
+            coVerify(exactly = 0) { client.updateSettings(any(), any()) }
+            mutation.setThinkingLevel("low")
+            runCurrent()
+            coVerify(exactly = 1) { client.updateSettings("session", RemoteSettings(effort = "low")) }
+            assertEquals("deepseek-v4-pro[1m]", state.value.selectedModel)
+            assertEquals("high", state.value.selectedEffort)
+            assertEquals("native-turn", state.value.runtime?.activeTurnId)
+            assertEquals(pending, state.value.runtime?.settingsChange)
+            assertFalse(state.value.settingsPending)
+            assertTrue(state.value.canSend)
+            coVerify(exactly = 0) { client.send(any(), any(), any(), any()) }
+        }
+    }
+
+    @Test fun resolvedModelEffortFallbackRequiresClaudeAndExactSessionGrantButNoCatalog() {
+        val initial = initial()
+        val state = initial.copy(runtime = RemoteRuntime("active", "turn", "resolved-provider-model"))
+        assertEquals(listOf("low", "high"), state.effortChoices)
+        assertTrue(state.canEditSettings)
+        val codex = state.copy(devices = state.devices.map { device ->
+            device.copy(adapters = device.adapters.map { it.copy(family = "codex") })
+        })
+        assertTrue(codex.effortChoices.isEmpty())
+        assertFalse(codex.canEditSettings)
+        val withoutCatalog = state.copy(models = emptyList())
+        assertTrue(withoutCatalog.canEditSettings)
+        assertEquals(listOf("low", "medium", "high", "xhigh", "max"), withoutCatalog.effortChoices)
+        val catalogMatch = state.copy(runtime = state.runtime!!.copy(model = "model"),
+            models = state.models + RemoteModel("other", "Other", reasoningEfforts = listOf("max")))
+        assertEquals(listOf("low", "high"), catalogMatch.effortChoices)
+        val ungranted = state.copy(session = state.session!!.copy(access = state.session.access!!.copy(
+            capabilities = RemoteCapabilities(history = true))))
+        assertTrue(ungranted.effortChoices.isEmpty())
+        assertFalse(ungranted.canEditSettings)
+        val mismatched = state.copy(session = state.session!!.copy(access = state.session.access!!.copy(binding = "")))
+        assertTrue(mismatched.effortChoices.isEmpty())
+        assertFalse(mismatched.canEditSettings)
+    }
+
     @Test fun pendingSettingsReleasesSendBarrierWithoutClaimingAppliedValues() = runTest {
         val state = MutableStateFlow(initial())
         val client = mockk<FiloClient>()

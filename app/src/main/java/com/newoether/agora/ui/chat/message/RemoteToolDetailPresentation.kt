@@ -13,8 +13,16 @@ internal fun Resources.remoteToolDetailPresentation(segment: MessageSegment): To
     val localized = when (body) {
         is ToolDetailBody.Active -> body.copy(text = toolSummary(native))
         is ToolDetailBody.FileContent -> body.copy(emptyText = getString(R.string.tool_read_file_empty_default))
-        is ToolDetailBody.Edit -> body.copy(replaceAllLabel = getString(R.string.tool_edit_replace_all),
-            status = toolSummary(native))
+        is ToolDetailBody.Edit -> body.copy(
+            replaceAllLabel = getString(R.string.tool_edit_replace_all),
+            status = toolSummary(native),
+            files = body.files.map { file -> file.copy(operationLabel = getString(when (file.operation) {
+                ToolDetailEditOperation.UPDATE -> R.string.tool_edit_operation_update
+                ToolDetailEditOperation.ADD -> R.string.tool_edit_operation_add
+                ToolDetailEditOperation.DELETE -> R.string.tool_edit_operation_delete
+                ToolDetailEditOperation.MOVE -> R.string.tool_edit_operation_move
+            })) },
+        )
         is ToolDetailBody.Shell -> body.copy(
             status = body.status.toIntOrNull()?.let { getString(R.string.tool_shell_detail_returned_code, it) }
                 ?: shellExecutionSummary(native),

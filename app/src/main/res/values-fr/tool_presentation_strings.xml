@@ -118,4 +118,8 @@
         <item quantity="one">%1$d serveur MCP listé</item>
         <item quantity="other">%1$d serveurs MCP listés</item>
     </plurals>
+    <string name="tool_edit_operation_update">Modifier</string>
+    <string name="tool_edit_operation_add">Ajouter</string>
+    <string name="tool_edit_operation_delete">Supprimer</string>
+    <string name="tool_edit_operation_move">Déplacer</string>
 </resources>

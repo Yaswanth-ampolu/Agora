@@ -33,6 +33,16 @@ internal enum class ToolDetailDiffKind { CONTEXT, REMOVED, ADDED }
 internal data class ToolDetailDiffLine(val kind: ToolDetailDiffKind, val text: String)
 internal data class ToolDetailDiffHunk(val index: Int?, val replaceAll: Boolean, val lines: List<ToolDetailDiffLine>)
 
+/** One complete file operation; protocol metadata never becomes a code row. */
+internal enum class ToolDetailEditOperation { UPDATE, ADD, DELETE, MOVE }
+internal data class ToolDetailEditFile(
+    val path: ToolDetailPath,
+    val operation: ToolDetailEditOperation,
+    val hunks: List<ToolDetailDiffHunk>,
+    val moveTo: ToolDetailPath? = null,
+    val operationLabel: String = "",
+)
+
 private const val DIFF_CONTEXT_LINES = 3
 private const val MAX_HIGHLIGHTS_PER_LINE = 50
 

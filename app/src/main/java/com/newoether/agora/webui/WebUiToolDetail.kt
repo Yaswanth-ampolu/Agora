@@ -52,12 +52,12 @@ internal fun Resources.webToolDetail(segment: MessageSegment): WebToolDetail {
                 path = body.path?.let(::webToolPath),
                 editCount = body.editCount,
                 replaceAllLabel = body.replaceAllLabel,
-                hunks = body.hunks.map { hunk ->
-                    WebToolDiffHunk(hunk.index, hunk.replaceAll, hunk.lines.map {
-                        WebToolDiffLine(it.kind.name.lowercase(), it.text)
-                    })
-                },
+                hunks = body.hunks.map(::webToolDiffHunk),
                 status = body.status,
+                files = body.files.map { file -> WebToolEditFile(
+                    webToolPath(file.path), file.operationLabel, file.hunks.map(::webToolDiffHunk),
+                    file.moveTo?.let(::webToolPath),
+                ) },
             )
             is ToolDetailBody.Search -> WebToolBody.Search(body.results.map {
                 WebToolSearchResult(it.title, it.url, it.safeUrl, it.snippet)
@@ -74,6 +74,9 @@ internal fun Resources.webToolDetail(segment: MessageSegment): WebToolDetail {
 }
 
 private fun webToolPath(path: ToolDetailPath) = WebToolPath(path.name, path.directory)
+
+private fun webToolDiffHunk(hunk: com.newoether.agora.ui.chat.message.ToolDetailDiffHunk) =
+    WebToolDiffHunk(hunk.index, hunk.replaceAll, hunk.lines.map { WebToolDiffLine(it.kind.name.lowercase(), it.text) })
 
 private fun webToolCodeRow(row: ToolDetailCodeRow): WebToolCodeRow = when (row) {
     ToolDetailCodeRow.Gap -> WebToolCodeRow(gap = true)
@@ -150,6 +153,7 @@ internal sealed interface WebToolBody {
     data class Edit(
         val path: WebToolPath?, val editCount: String?, val replaceAllLabel: String,
         val hunks: List<WebToolDiffHunk>, val status: String,
+        val files: List<WebToolEditFile> = emptyList(),
     ) : WebToolBody
     @Serializable @SerialName("search")
     data class Search(val results: List<WebToolSearchResult>) : WebToolBody
@@ -168,6 +172,10 @@ internal data class WebToolCodeRow(
     val context: Boolean = false,
     val highlights: List<List<Int>> = emptyList(),
     val gap: Boolean = false,
+)
+@Serializable
+internal data class WebToolEditFile(
+    val path: WebToolPath, val operationLabel: String, val hunks: List<WebToolDiffHunk>, val moveTo: WebToolPath?,
 )
 @Serializable
 internal data class WebToolDiffHunk(val index: Int?, val replaceAll: Boolean, val lines: List<WebToolDiffLine>)

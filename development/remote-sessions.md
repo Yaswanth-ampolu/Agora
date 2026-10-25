@@ -50,7 +50,10 @@ session-local rewrites for subsequent main turns; they remain pending until the 
 pending; mismatches fail and expose actual values. Named effort choices come from the native
 request API, not a per-model support guarantee. Claude Desktop uses the same Code
 Mod implementation but still needs embedded-engine runtime qualification; CLI probes do not
-qualify Desktop. Remote creation is supported only by the separate Claude Code execution path.
+qualify Desktop. Codex CLI and Claude Code never expose remote creation; their source descriptors
+and scoped creation routes refuse it before native allocation. Agora also hides CLI New Chat
+against an older service that still advertises creation. Existing CLI conversations, including
+previously Filo-created work, retain their independently admitted controls.
 Claude Desktop Code uses existing Mod-registered conversations and does not support creation;
 New Chat stays unavailable through the create capability, without an unsupported-creation
 notice in the catalog. Chat/Cowork are not advertised.
@@ -124,6 +127,11 @@ shared device read/cache/stream/upload limits never multiply with configured sou
 Unsupported create/settings/send/Stop/manage controls stay hidden or disabled by explicit capability;
 history remains readable and drafts editable. Read-only sources subscribe only when their explicit
 live capability permits native observation; read-only history alone never starts a live subscription.
+A successful initial detail read may supply a fresh, identity-validated session grant for idle Send
+or settings even when `live:false`. Preserve that snapshot's runtime for those explicitly granted
+controls; model metadata, catalog grants and a missing detail grant cannot establish control.
+If the detail grant adds `live:true`, enter the existing subscription using the same selected owner.
+This initial capability discovery is separate from the failed-subscription fallback below.
 Native exact acceptance requires the actual client ID, user-message identity and turn identity.
 Claude Mod's explicitly labeled non-exact submitted/observed contract above is a separate weaker
 claim; a content observation never manufactures exact native linkage.
@@ -276,8 +284,10 @@ not the menu trigger or unrelated read-only controls. Opening a menu never submi
 Sessions automatically loads the next cursor at the laid-out list bottom. Preserve rows
 and scroll position, reject repeated cursors, fence late pages and retain explicit error
 retry. There is no Refresh or Load More button; pull-to-refresh on the catalog list performs the
-existing explicit refresh, and its indicator shows only for that user pull while loading. Switching
-source or moving between loading, empty and populated states cross-fades the Sessions group over
+existing explicit refresh, and its indicator shows only for that user pull while loading. The
+shared Settings scaffold brings it down from the safe page top above the title, toolbar and list
+(see settings-ui-ux.md). Switching source or moving between loading, empty and populated states
+cross-fades the Sessions group over
 200ms; edits within one populated list do not. The Sessions SettingsGroup always remains visible,
 including empty, loading and failed reads. An empty loading list shows a 20dp/2dp circular indicator
 with the localized Loading label in a standard SettingsItem. Once loading ends, an empty list uses
@@ -516,12 +526,13 @@ for first Send without claiming native Online or creating an empty session.
 
 Both original and Remote model dropdowns share the leading check for the selected model.
 Remote always retains the attachment plus, model selector and original bottom-bar details
-button with its Thinking and Service Tier rows, including while loading or using a read-only
-source. Unusable controls and menu items are disabled, never hidden. Without a model capability
-the selector shows a disabled Model Unavailable entry. The composer shows no read-only or
-snapshot notice line. Each row is disabled independently when
-its capability, model options or runtime admission is unavailable. The same capability fence applies
-to an already-open sheet if capabilities change. Unsupported rows are never hidden.
+button, including while loading or using a read-only source. Thinking remains visible and
+is independently disabled when its capability, model options or runtime admission is unavailable.
+Service Tier is hidden when the selected source does not advertise `serviceTier` settings,
+including both Claude sources. An advertised tier row stays visible but disabled while its
+model options or current session grant are unavailable. Without a model capability the selector
+shows a disabled Model Unavailable entry. The composer shows no read-only or snapshot notice line.
+The same capability fence applies to an already-open sheet if capabilities change.
 Remote Thinking and Service Tier use plain rows in the original details dropdown. Those rows
 open the original bottom sheets and slider panels; neither the dropdown nor panel exposes a
 toggle. Remote sheets omit the panels' top header/description item and its spacing.
@@ -545,17 +556,29 @@ confirmed native value, settles the original panel feedback gate, and reports th
 Snackbar. A stale failure cannot roll back a newer choice or affect a different selected owner.
 For Claude Mod, releasing the native settings submission barrier permits the next Send while
 request confirmation remains pending, because that next turn supplies the required evidence.
-The composer shows localized pending/confirmed/failed status and actual mismatch values without
-claiming native config changed. Other sources keep Send behind outstanding native application.
+The composer never renders native settings pending/confirmed/failed labels, request receipts,
+raw mismatch values, or other diagnostic markers. Confirmation remains internal; setting failures
+use the existing Snackbar. Other sources keep Send behind outstanding native application.
 Draft choices remain local until first Send. Unknown tier
 is distinct from confirmed Default (`serviceTierKnown:true` with null/default).
-Native model catalogs define model IDs. Remote displays a nonblank native model name verbatim
-in both the selector and its menu. A missing catalog entry or blank native name uses the shared
-model-alias display fallback; neither presentation path changes the model ID sent to Filo.
+Native model catalogs define model IDs. For Codex, Remote displays the nonblank native model
+name with hyphens replaced by spaces in both the selector and its menu (`GPT-6.1-Sol` becomes
+`GPT 6.1 Sol`). Other families retain their native names. A missing catalog entry or blank native
+name uses the shared model-alias display fallback; neither path changes the model ID sent to Filo.
 CLI session access retains source-level read-only model metadata while execution capabilities
-remain bound to the admitted native task. Claude Mod's named effort controls reflect the official
-request rewrite API; they do not assert model-specific support. Other sources use their native
-catalog's supported efforts, tiers and defaults.
+remain bound to the admitted native task. Claude Code reads model metadata from its selected
+executable's native initialize response, preserving IDs, labels and effort metadata; Mod aliases
+never override that catalog. Claude Mod's named effort controls reflect the official request
+rewrite API; they do not assert model-specific support. An admitted existing Claude session with
+an exact effort grant keeps request effort controls when its actual runtime model has no catalog
+entry or the catalog is unavailable. Prefer advertised named efforts, falling back to the request
+API's low/medium/high/xhigh/max enum; never invent an alias mapping or replace the actual model.
+A missing session effort grant disables the control. Other sources use their native catalog's
+supported efforts, tiers and defaults. Original Claude Mod sessions advertise effort only and
+refuse model mutations until a provider-ready native catalog and switching path are qualified.
+Claude Desktop's `config.list` aliases are not its true `modelSelectorConfig` catalog; the current
+helper has no supported read-only getter or alias resolver for that catalog, so its model catalog
+route is unsupported. CLI models must never substitute for Desktop's native directory.
 Settings apply to subsequent turns.
 Draft choices apply after one native creation and before first Send. If settings fail after
 known creation, explicit retry uses the same native ID. Unknown creation/send retains the draft;
@@ -582,8 +605,8 @@ Transport errors remain Snackbar notices. Missing live state must never invent a
 or mark a failed turn as generating. Error messages do not disable an explicit Send retry.
 Errors and delivery uncertainty use the existing Snackbar. Input receipt states are internal only;
 no submitting/submitted/observed/non-exact receipt label belongs above the composer.
-Pending request settings use the existing composer status slot, and failed settings show
-actual model/effort. UNKNOWN keeps the draft editable and Send blocked; no retry or acknowledgment
+Native settings confirmation and input receipt states stay internal; normal chat exposes no
+request-status or debug lines. UNKNOWN keeps the draft editable and Send blocked; no retry or acknowledgment
 button is added. Other sources retain text-only Snackbar delivery feedback and explicit fresh
 attempt semantics. Automatic input replay remains prohibited.
 
@@ -609,8 +632,11 @@ races. Use focused tests while iterating, then the full build and matching deplo
 Service startup, unit tests, APK hash/install and actual UI acceptance are distinct evidence.
 Physical phone UI acceptance belongs to the owner; no taps/screenshots/UI dumps are implied.
 
-Codex Desktop Sessions rows expose the original three-dot dropdown with Rename and Archive and reuse
-ChatRenameDialog/ChatDeleteConfirmDialog with archive-specific copy. The owner requires
+Sessions rows expose the original three-dot management dropdown only when that session's
+verified access supports Rename or Archive. Unsupported actions and an empty management entry
+are absent, including ordinary Codex CLI sessions without either grant. Supported actions stay
+visible but disabled during a pending mutation. Capability loss closes the affected menu/dialog.
+Codex Desktop reuses ChatRenameDialog/ChatDeleteConfirmDialog with archive-specific copy. The owner requires
 only Codex thread/archive, preserving history and synchronizing the desktop archive
 notification. Neither desktop ownership nor generation disables Archive. Update/remove
 a row only after confirmed native success; failures use Snackbar and never hide the task.

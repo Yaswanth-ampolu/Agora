@@ -56,6 +56,7 @@ internal sealed interface ToolDetailBody {
         val replaceAllLabel: String,
         val hunks: List<ToolDetailDiffHunk>,
         val status: String,
+        val files: List<ToolDetailEditFile> = emptyList(),
     ) : ToolDetailBody
     data class Search(val results: List<ToolDetailSearchResult>) : ToolDetailBody
 }

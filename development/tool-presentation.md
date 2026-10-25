@@ -105,9 +105,15 @@ to Filo's decoded-field projection. Unknown tools and invalid structures keep JS
 Codex fileChange renders every `changes` entry in order. String and object `kind` forms select
 literal full-file added/deleted rows for `add`/`delete`, preserving source prefixes and blank
 lines; `update` parses unified diff rows and shows an optional `move_path` from the kind or
-change object. Each section identifies its operation and path, including empty files. Claude
-Write/Edit and apply_patch Add File use the same literal code/diff bodies. Unsupported fields
-or malformed entries retain the whole original payload rather than omitting part of a batch.
+change object. Each file is an independent section using the native primary-colored monospace
+file-name header and secondary directory, plus a localized operation MetaPill. A move retains both
+source and destination headers. Recognized Begin/End Patch, Update/Add/Delete File, Move to,
+unified file headers and hunk markers are metadata, never repeated diff body rows. Each hunk uses
+the native spacing and optional numbered pill instead of an `@@` title. Empty added/deleted files
+still retain their file header and operation. Compose and WebUI consume the same parsed sections;
+the browser never reparses patch text. Claude Write/Edit and apply_patch Add File use the same
+literal code/diff bodies. Unsupported fields or malformed entries retain the whole original
+payload rather than omitting part of a batch.
 
 ## Localization
 

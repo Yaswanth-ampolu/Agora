@@ -355,6 +355,7 @@ internal class RemoteViewModel(
         polling = viewModelScope.launch {
             var consecutiveFailures = 0
             var notifiedFailure: RemoteFailure? = null
+            var liveSubscription = capabilities.live
             do {
                 if (state.value.devices.firstOrNull { it.id == id }?.status == RemoteDeviceStatus.ERROR) {
                     updateDevice(id) { it.copy(status = RemoteDeviceStatus.CONNECTING, failure = null) }
@@ -369,10 +370,19 @@ internal class RemoteViewModel(
                             loading = false, failure = null,
                         )
                         startSessionStatusReads()
-                    } else if (!capabilities.live) {
-                        applyPage(client, session.id, generation, client.conversation(session.id), liveControl = false)
-                        break
                     } else {
+                        if (!liveSubscription) {
+                            val page = client.conversation(session.id)
+                            val grant = page.access?.capabilities?.intersect(state.value.selectedAdapter.capabilities)
+                            val controlsAvailable = grant?.let {
+                                it.live || it.idleSend || it.activeSend == "native-steer" || it.stop || it.settings.isNotEmpty()
+                            } == true
+                            // A fresh session grant can permit idle controls without a live subscription.
+                            applyPage(client, session.id, generation, page, controlReady = controlsAvailable)
+                            if (generation != epoch) return@launch
+                            liveSubscription = state.value.capabilities.live
+                            if (!liveSubscription) break
+                        }
                         client.events(session.id).collect { page ->
                             if (generation == epoch) {
                                 applyPage(client, session.id, generation, page)
@@ -394,7 +404,7 @@ internal class RemoteViewModel(
                         if (session != null && readFailure in setOf(RemoteFailure.NETWORK, RemoteFailure.SERVICE)) {
                             try {
                                 // Read the same original owner when subscription fails; never admit another host.
-                                applyPage(client, session.id, generation, client.conversation(session.id), liveControl = false)
+                                applyPage(client, session.id, generation, client.conversation(session.id), controlReady = false)
                                 if (generation != epoch) return@launch
                                 reachable = true
                             } catch (cancelled: CancellationException) { throw cancelled }
@@ -453,7 +463,7 @@ internal class RemoteViewModel(
 
     private suspend fun applyPage(
         client: FiloClient, sessionId: String, generation: Long, page: RemoteConversationPage,
-        liveControl: Boolean = true, confirmedSettings: Boolean = false,
+        controlReady: Boolean = true, confirmedSettings: Boolean = false,
     ) {
         if (generation != epoch) return
         page.access?.let { access ->
@@ -498,6 +508,7 @@ internal class RemoteViewModel(
                 effort = previousRuntime?.effort, serviceTier = previousRuntime?.serviceTier,
                 serviceTierKnown = previousRuntime?.serviceTierKnown == true,
             )
+            if (acceptsSettings && !confirmedSettings) settingsMutation.observeRuntime(state.value, nativeRuntime)
             mutableState.value = state.value.copy(
                 nodes = nodes, messageGroups = groups, hydrationEnabled = visible,
                 historyCursor = if (old.isEmpty()) incoming.last().nextCursor else state.value.historyCursor,
@@ -508,7 +519,7 @@ internal class RemoteViewModel(
                 sessions = state.value.sessions.map { current ->
                     if (current.id == sessionId && nativeRuntime?.title != null) current.copy(title = nativeRuntime.title) else current
                 },
-                runtime = nativeRuntime.takeIf { liveControl },
+                runtime = nativeRuntime.takeIf { controlReady },
                 lastKnownModel = nativeRuntime?.model ?: state.value.lastKnownModel,
             )
         }

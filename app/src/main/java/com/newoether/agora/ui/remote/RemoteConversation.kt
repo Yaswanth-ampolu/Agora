@@ -96,18 +96,22 @@ internal fun RemoteConversation(
     var lastToolsDismissTime by remember(owner) { mutableLongStateOf(0L) }
     var showThinkingSheet by remember(owner) { mutableStateOf(false) }
     var showOpenAiServiceTierSheet by remember(owner) { mutableStateOf(false) }
-    val effortChoices = state.settingsModel?.reasoningEfforts.orEmpty()
+    val effortChoices = state.effortChoices
     val tierChoices = state.settingsModel?.serviceTiers.orEmpty()
     val ultraFastLabel = stringResource(R.string.openai_service_tier_ultrafast)
     val tierLabels = tierChoices.associate { it.id to if (it.id == "ultrafast") ultraFastLabel else it.name }
     val settingsEnabled = active && state.canEditSettings
     val thinkingControlEnabled = settingsEnabled && "effort" in state.capabilities.settings && effortChoices.isNotEmpty()
-    val tierControlEnabled = settingsEnabled && "serviceTier" in state.capabilities.settings && state.settingsModel?.serviceTiers != null
+    val tierSupported = "serviceTier" in state.selectedAdapter.capabilities.settings
+    val tierControlEnabled = settingsEnabled && tierSupported && "serviceTier" in state.capabilities.settings && state.settingsModel?.serviceTiers != null
     val thinkingEnabled = state.selectedEffort != null && state.selectedEffort != "none"
     val thinkingLevel = state.selectedEffort.orEmpty()
     val openAiServiceTierEnabled = state.selectedServiceTier != null
     val openAiServiceTier = state.selectedServiceTier.orEmpty()
     val serviceTierKnown = state.serviceTierKnown
+    LaunchedEffect(tierSupported) {
+        if (!tierSupported) showOpenAiServiceTierSheet = false
+    }
     LaunchedEffect(active) {
         if (!active) {
             activeMenu = null
@@ -345,7 +349,6 @@ internal fun RemoteConversation(
             ChatComposerLayout(field, focus, scroll::setComposerInputFocused, expanded, spacer.isRunning,
                 onExpand = { expanded = true }, onCollapse = { expanded = false },
                 statusContent = {
-                    RemoteNativeConfirmation(state.runtime?.settingsChange)
                     ComposerStatusColumn(state.queued, { it.id }) { QueuedMessageRow(text = it.text) }
                 },
                 attachmentContent = {
@@ -364,7 +367,7 @@ internal fun RemoteConversation(
                             !submitting && !stopping && !state.controlling
                         ComposerModelSelector(
                             displayText = (state.models.takeIf { state.capabilities.models }
-                                ?.firstOrNull { it.id == state.selectedModel }?.displayName
+                                ?.firstOrNull { it.id == state.selectedModel }?.displayName(state.selectedAdapter.family)
                                 ?: state.selectedModel?.let(::inferModelAlias)) ?: stringResource(
                                     if (state.capabilities.models && (state.modelsLoading || state.loading)) R.string.loading_label
                                     else R.string.remote_model_unavailable),
@@ -397,7 +400,7 @@ internal fun RemoteConversation(
                                 )
                                 sortedModels.forEach { model ->
                                     ComposerModelMenuItem(
-                                        displayText = model.displayName,
+                                        displayText = model.displayName(state.selectedAdapter.family),
                                         selected = model.id == state.selectedModel,
                                         enabled = modelChoice,
                                         onClick = {
@@ -478,7 +481,7 @@ internal fun RemoteConversation(
                                     onClick = { activeMenu = null; showThinkingSheet = true },
                                     enabled = thinkingControlEnabled,
                                 )
-                                AgoraDropdownMenuItem(
+                                if (tierSupported) AgoraDropdownMenuItem(
                                     text = {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Icon(

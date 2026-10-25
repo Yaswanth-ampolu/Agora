@@ -205,10 +205,9 @@ internal class RemoteSourceSelectionTest : RemoteViewModelFixture() {
         assertEquals("native", vm.state.value.models.single().id)
         vm.newSession()
         runCurrent()
-        assertTrue(vm.state.value.isDraft)
+        assertFalse(vm.state.value.isDraft)
         assertEquals("native", vm.state.value.models.single().id)
-        assertTrue(vm.state.value.canCreate)
-        assertTrue(vm.state.value.canChooseModel)
+        assertFalse(vm.state.value.canCreate)
         assertEquals(1, notices.count { it.stage == "models_failed" })
         coVerify(exactly = 0) { unavailableClient.create(any(), any(), any(), any()) }
         coVerify(exactly = 0) { unavailableClient.send(any(), any(), any(), any()) }

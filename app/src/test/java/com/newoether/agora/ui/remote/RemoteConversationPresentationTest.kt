@@ -82,6 +82,27 @@ class RemoteConversationPresentationTest {
         verify(exactly = 0) { vm.send() }
     }
 
+    @Test fun nativeSettingsConfirmationNeverRendersDiagnosticComposerLabels() {
+        state = state.copy(runtime = RemoteRuntime("idle", model = "actual-model"))
+        show()
+        for (phase in listOf("pending", "confirmed", "failed")) {
+            compose.runOnIdle {
+                state = state.copy(runtime = state.runtime?.copy(settingsChange = RemoteSettingsChange(
+                    id = "change-$phase", state = phase, requested = RemoteSettings(model = "requested-model", effort = "high"),
+                    actualModel = "actual-model", actualEffort = "low",
+                )))
+            }
+            compose.onAllNodes(hasText("Settings pending", substring = true)).assertCountEquals(0)
+            compose.onAllNodes(hasText("Settings confirmed", substring = true)).assertCountEquals(0)
+            compose.onAllNodes(hasText("Settings differ", substring = true)).assertCountEquals(0)
+            compose.onAllNodes(hasText("actual model:", substring = true)).assertCountEquals(0)
+            compose.onNode(hasSetTextAction()).assertTextContains("Unsent draft")
+        }
+        verify(exactly = 0) { vm.send() }
+        verify(exactly = 0) { vm.setModel(any()) }
+        verify(exactly = 0) { vm.setThinkingLevel(any()) }
+    }
+
     @Test fun detailsRemainsVisibleDuringLoadingWithBothUnavailableRowsDisabled() {
         state = state.copy(models = emptyList(), modelsLoading = true, loading = true)
         show()
@@ -101,7 +122,7 @@ class RemoteConversationPresentationTest {
         show()
         compose.onNodeWithContentDescription(text(R.string.tools)).assertIsDisplayed().performClick()
         compose.onNodeWithText(text(R.string.thinking)).assertExists().assertIsNotEnabled()
-        compose.onNodeWithText(text(R.string.openai_service_tier_title)).assertExists().assertIsNotEnabled()
+        compose.onNodeWithText(text(R.string.openai_service_tier_title)).assertDoesNotExist()
     }
     @Test fun nativeModelRemainsVisibleWithoutCatalogOrMutationSupport() {
         val caps = RemoteCapabilities(history = true, live = true)
@@ -136,8 +157,8 @@ class RemoteConversationPresentationTest {
             runtime = RemoteRuntime("idle", model = model.id, effort = "xhigh"),
         )
         show()
-        compose.onNodeWithText("GPT-6.1-Sol").assertIsDisplayed().performClick()
-        compose.onAllNodesWithText("GPT-6.1-Sol").onLast().assertIsEnabled().performClick()
+        compose.onNodeWithText("GPT 6.1 Sol").assertIsDisplayed().performClick()
+        compose.onAllNodesWithText("GPT 6.1 Sol").onLast().assertIsEnabled().performClick()
         verify(exactly = 1) { vm.setModel("gpt-6.1-sol") }
         compose.onNodeWithContentDescription(text(R.string.tools)).performClick()
         compose.onNodeWithText(text(R.string.thinking)).assertIsEnabled().performClick()
@@ -149,12 +170,86 @@ class RemoteConversationPresentationTest {
         verify(exactly = 1) { vm.setThinkingLevel("low") }
     }
 
+    @Test fun modelLabelFormattingKeepsClaudeNativeNamesAndBothRawIds() {
+        val codex = RemoteModel("gpt-6.1-sol", "GPT-6.1-Sol")
+        val claude = RemoteModel("opus", "deepseek-v4-pro[1m]")
+        assertEquals("GPT 6.1 Sol", codex.displayName("codex"))
+        assertEquals("gpt-6.1-sol", codex.id)
+        assertEquals("deepseek-v4-pro[1m]", claude.displayName("claude"))
+        assertEquals("opus", claude.id)
+    }
+
     @Test fun blankNativeNameUsesTheSharedFallbackInSelectorAndMenuWithoutChangingIdentity() {
         state = state.copy(models = listOf(RemoteModel("gpt-6.1-sol", "  ", true)))
         show()
         compose.onNodeWithText("GPT 6.1 Sol").assertIsDisplayed().performClick()
         compose.onAllNodesWithText("GPT 6.1 Sol").onLast().assertIsEnabled().performClick()
         verify(exactly = 1) { vm.setModel("gpt-6.1-sol") }
+    }
+
+    @Test fun bothCodexSourcesKeepEffortAndTierControlsAvailableWhileActive() {
+        val caps = RemoteCapabilities(history = true, live = true, models = true,
+            idleSend = true, activeSend = "native-steer", stop = true,
+            settings = listOf("model", "effort", "serviceTier"))
+        val source = RemoteAdapter("codex-desktop", "codex", "desktop", "connected",
+            nativeScopeId = "scope", capabilities = caps)
+        state = state.copy(
+            devices = state.devices.map { it.copy(multiAdapter = true, adapters = listOf(source)) },
+            adapterSelections = mapOf("device" to source.id),
+            session = RemoteSession("native", "", "", 0,
+                access = RemoteSessionAccess("scope", "canonical", "binding", caps)),
+            draftSessionId = null, models = listOf(RemoteModel("gpt-6.1-sol", "GPT-6.1-Sol", true,
+                listOf("low", "high"), "low", listOf(RemoteServiceTier("fast", "Fast")))),
+            runtime = RemoteRuntime("active", activeTurnId = "turn", model = "gpt-6.1-sol", effort = "high"),
+        )
+        show()
+        for ((id, origin) in listOf("codex-desktop" to "desktop", "codex-cli" to "cli")) {
+            compose.runOnIdle {
+                val selected = source.copy(id = id, origin = origin)
+                state = state.copy(devices = state.devices.map { it.copy(adapters = listOf(selected)) },
+                    adapterSelections = mapOf("device" to id))
+            }
+            compose.onNodeWithContentDescription(text(R.string.tools)).performClick()
+            compose.onNodeWithText(text(R.string.thinking)).assertIsEnabled()
+            compose.onNodeWithText(text(R.string.openai_service_tier_title)).assertIsEnabled().performClick()
+            compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress)).assertIsEnabled()
+                .performSemanticsAction(SemanticsActions.SetProgress) { assertTrue(it(1f)) }
+            compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.Dismiss))
+                .performSemanticsAction(SemanticsActions.Dismiss) { it() }
+        }
+        verify(exactly = 2) { vm.setServiceTier("fast") }
+    }
+
+    @Test fun bothClaudeSourcesHideServiceTierAndAllowEffortWhileActive() {
+        val caps = RemoteCapabilities(history = true, live = true,
+            idleSend = true, activeSend = "native-steer", stop = true, settings = listOf("effort"))
+        val source = RemoteAdapter("claude-code", "claude", "cli", "connected",
+            nativeScopeId = "scope", capabilities = caps)
+        state = state.copy(
+            devices = state.devices.map { it.copy(multiAdapter = true, adapters = listOf(source)) },
+            adapterSelections = mapOf("device" to source.id),
+            session = RemoteSession("native", "", "", 0,
+                access = RemoteSessionAccess("scope", "canonical", "binding", caps)),
+            draftSessionId = null, models = emptyList(),
+            runtime = RemoteRuntime("active", activeTurnId = "turn", model = "deepseek-v4-pro[1m]", effort = "high"),
+        )
+        show()
+        for ((id, origin) in listOf("claude-code" to "cli", "claude-desktop" to "desktop")) {
+            compose.runOnIdle {
+                val selected = source.copy(id = id, origin = origin)
+                state = state.copy(devices = state.devices.map { it.copy(adapters = listOf(selected)) },
+                    adapterSelections = mapOf("device" to id))
+            }
+            compose.onNodeWithContentDescription(text(R.string.tools)).performClick()
+            compose.onNodeWithText(text(R.string.openai_service_tier_title)).assertDoesNotExist()
+            compose.onNodeWithText(text(R.string.thinking)).assertIsEnabled().performClick()
+            compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress)).assertIsEnabled()
+                .performSemanticsAction(SemanticsActions.SetProgress) { assertTrue(it(0f)) }
+            compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.Dismiss))
+                .performSemanticsAction(SemanticsActions.Dismiss) { it() }
+        }
+        verify(exactly = 2) { vm.setThinkingLevel("low") }
+        verify(exactly = 0) { vm.setServiceTier(any()) }
     }
 
     @Test fun supportedThinkingAndUnsupportedTierAreDisabledIndependently() {

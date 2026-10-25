@@ -168,4 +168,8 @@
         <item quantity="one">Listed %1$d MCP server</item>
         <item quantity="other">Listed %1$d MCP servers</item>
     </plurals>
+    <string name="tool_edit_operation_update">Update</string>
+    <string name="tool_edit_operation_add">Add</string>
+    <string name="tool_edit_operation_delete">Delete</string>
+    <string name="tool_edit_operation_move">Move</string>
 </resources>

@@ -206,4 +206,8 @@
         <item quantity="many">Получено %1$d серверов MCP</item>
         <item quantity="other">Получено %1$d сервера MCP</item>
     </plurals>
+    <string name="tool_edit_operation_update">Изменить</string>
+    <string name="tool_edit_operation_add">Добавить</string>
+    <string name="tool_edit_operation_delete">Удалить</string>
+    <string name="tool_edit_operation_move">Переместить</string>
 </resources>

@@ -228,6 +228,12 @@ internal fun RemoteScreen(vm: RemoteViewModel, settings: SettingsRepository, act
                                             var showMenu by remember { mutableStateOf(false) }
                                             var action by remember { mutableStateOf<String?>(null) }
                                             val actionsEnabled = current && active && !displayed.controlling
+                                            val capabilities = displayed.capabilitiesFor(session)
+                                            LaunchedEffect(capabilities.rename, capabilities.archive) {
+                                                if (!capabilities.rename && !capabilities.archive) showMenu = false
+                                                if ((action == "rename" && !capabilities.rename) ||
+                                                    (action == "archive" && !capabilities.archive)) action = null
+                                            }
                                             DisposableEffect(session.id) { onDispose { visibleRows.remove(session.id) } }
                                             SettingsItem(
                                                 modifier = Modifier.onGloballyPositioned { coordinates ->
@@ -248,7 +254,7 @@ internal fun RemoteScreen(vm: RemoteViewModel, settings: SettingsRepository, act
                                                             isSelected = false,
                                                             hasUnreadGeneration = displayed.hasUnreadGeneration(session.id),
                                                         ))
-                                                        Box {
+                                                        if (capabilities.rename || capabilities.archive) Box {
                                                             IconButton(onClick = { showMenu = true }, enabled = current && active) {
                                                                 Icon(Icons.Default.MoreVert, stringResource(R.string.more))
                                                             }
@@ -257,16 +263,16 @@ internal fun RemoteScreen(vm: RemoteViewModel, settings: SettingsRepository, act
                                                                 tonalElevation = 16.dp,
                                                                 expanded = showMenu, onDismissRequest = { showMenu = false },
                                                             ) {
-                                                                AgoraDropdownMenuItem(
+                                                                if (capabilities.rename) AgoraDropdownMenuItem(
                                                                     text = { Text(stringResource(R.string.rename)) },
                                                                     leadingIcon = { Icon(Icons.Default.Edit, null) },
-                                                                    enabled = actionsEnabled && displayed.capabilitiesFor(session).rename,
+                                                                    enabled = actionsEnabled,
                                                                     onClick = { showMenu = false; action = "rename" },
                                                                 )
-                                                                AgoraDropdownMenuItem(
+                                                                if (capabilities.archive) AgoraDropdownMenuItem(
                                                                     text = { Text(stringResource(R.string.remote_archive), color = MaterialTheme.colorScheme.error) },
                                                                     leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
-                                                                    enabled = actionsEnabled && displayed.capabilitiesFor(session).archive,
+                                                                    enabled = actionsEnabled,
                                                                     onClick = { showMenu = false; action = "archive" },
                                                                 )
                                                             }

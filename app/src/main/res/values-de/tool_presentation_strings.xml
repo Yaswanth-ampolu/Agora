@@ -166,4 +166,8 @@
         <item quantity="one">%1$d MCP-Server aufgelistet</item>
         <item quantity="other">%1$d MCP-Server aufgelistet</item>
     </plurals>
+    <string name="tool_edit_operation_update">Aktualisieren</string>
+    <string name="tool_edit_operation_add">Hinzufügen</string>
+    <string name="tool_edit_operation_delete">Löschen</string>
+    <string name="tool_edit_operation_move">Verschieben</string>
 </resources>

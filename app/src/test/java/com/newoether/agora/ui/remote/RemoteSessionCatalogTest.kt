@@ -87,13 +87,34 @@ class RemoteSessionCatalogTest {
         verify(exactly = 1) { vm.selectSession(session) }
         verify(exactly = 0) { vm.newSession() }
         compose.runOnIdle {
-            val supported = source.copy(id = "claude-code", origin = "cli",
+            val supported = source.copy(id = "codex-desktop", family = "codex", origin = "desktop",
                 capabilities = source.capabilities.copy(create = true))
             state.value = state.value.copy(
                 devices = state.value.devices.map { it.copy(adapters = listOf(supported)) },
                 adapterSelections = mapOf("device" to supported.id))
         }
         compose.onNodeWithContentDescription(text(R.string.new_chat)).assertIsDisplayed()
+    }
+
+    @Test fun bothCliSourcesHideCreationEvenWhenAnOlderServiceAdvertisesIt() {
+        val sources = listOf(
+            com.newoether.agora.remote.RemoteAdapter("codex-cli", "codex", "cli", "connected"),
+            com.newoether.agora.remote.RemoteAdapter("claude-code", "claude", "cli", "connected"),
+        ).map { it.copy(capabilities = com.newoether.agora.remote.RemoteCapabilities(create = true, history = true)) }
+        state.value = state.value.copy(
+            devices = state.value.devices.map { it.copy(multiAdapter = true, adapters = sources) },
+            adapterSelections = mapOf("device" to sources.first().id))
+        showScreen()
+        for (source in sources) {
+            compose.runOnIdle { state.value = state.value.copy(adapterSelections = mapOf("device" to source.id), sessions = emptyList()) }
+            compose.onNodeWithContentDescription(text(R.string.new_chat)).assertDoesNotExist()
+            val session = RemoteSession("native-${source.id}", "Existing ${source.id}", "/native", 1)
+            compose.runOnIdle { state.value = state.value.copy(sessions = listOf(session)) }
+            compose.onNodeWithContentDescription(text(R.string.new_chat)).assertDoesNotExist()
+            compose.onNodeWithText(session.title).performClick()
+            verify(exactly = 1) { vm.selectSession(session) }
+        }
+        verify(exactly = 0) { vm.newSession() }
     }
 
     @Test fun navigationBackRestoresCatalogViewportWhileCachedRowsRefresh() {

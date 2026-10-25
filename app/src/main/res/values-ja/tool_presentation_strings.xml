@@ -146,4 +146,8 @@
     <plurals name="tool_listed_mcp_servers">
         <item quantity="other">%1$d 件の MCP サーバーを一覧表示しました</item>
     </plurals>
+    <string name="tool_edit_operation_update">更新</string>
+    <string name="tool_edit_operation_add">追加</string>
+    <string name="tool_edit_operation_delete">削除</string>
+    <string name="tool_edit_operation_move">移動</string>
 </resources>

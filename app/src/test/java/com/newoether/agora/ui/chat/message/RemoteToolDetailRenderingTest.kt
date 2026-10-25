@@ -1,6 +1,13 @@
 package com.newoether.agora.ui.chat.message
 
 import android.app.Application
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertCountEquals
@@ -74,18 +81,62 @@ class RemoteToolDetailRenderingTest {
         val input = """{"changes":[{"path":"created.py","kind":{"type":"add"},"diff":"import pathlib\n+literal\n"},{"path":"gone.py","kind":"delete","diff":"removed"},{"path":"old.py","kind":{"type":"update","move_path":"moved.py"},"diff":"@@\n-before\n+after"}]}"""
         val native = segment("file_edit", input, input).copy(remoteToolSource = "codex-cli")
         compose.setContent { MaterialTheme { ToolDetailContent(native) { _, _ -> } } }
-        for (text in listOf("*** Add File: created.py", "import pathlib", "+literal",
-            "*** Delete File: gone.py", "removed", "*** Move to: moved.py", "before", "after")) {
+        for (text in listOf("created.py", "import pathlib", "+literal", "Add",
+            "gone.py", "Delete", "removed", "old.py", "moved.py", "Move", "before", "after")) {
             compose.onNodeWithText(text).assertExists()
         }
         compose.onAllNodesWithText("changes").assertCountEquals(0)
         val web = resources.webToolDetail(native)
         val body = web.body as WebToolBody.Edit
-        assertEquals(3, body.hunks.size)
-        assertEquals(listOf("import pathlib", "+literal"), body.hunks[0].lines.filter { it.kind == "added" }.map { it.text })
-        assertEquals("removed", body.hunks[1].lines.single { it.kind == "removed" }.text)
-        assertTrue(body.hunks[2].lines.any { it.text == "*** Move to: moved.py" })
+        for (text in listOf("*** Add File:", "*** Delete File:", "*** Move to:", "@@")) {
+            compose.onAllNodesWithText(text, substring = true).assertCountEquals(0)
+        }
+        assertEquals(3, body.files.size)
+        assertTrue(body.hunks.isEmpty())
+        assertEquals(listOf("import pathlib", "+literal"), body.files[0].hunks.single().lines.filter { it.kind == "added" }.map { it.text })
+        assertEquals("removed", body.files[1].hunks.single().lines.single { it.kind == "removed" }.text)
+        assertEquals("moved.py", body.files[2].moveTo!!.name)
         assertTrue(web.supplemental.isEmpty())
+    }
+
+    @Test fun applyPatchUsesPrimaryFileHeadersWithoutRepeatedProtocolRowsAtNarrowWidth() {
+        val patch = "*** Begin Patch\n*** Update File: /repo/src/a.kt\n@@ first anchor\n-old\n+new\n@@ second anchor\n-before\n+after\n*** Add File: /repo/new/b.kt\n+created\n*** End Patch"
+        val native = segment("apply_patch", patch, "done")
+        val original = native.copy()
+        var primary = androidx.compose.ui.graphics.Color.Unspecified
+        compose.setContent {
+            MaterialTheme {
+                primary = MaterialTheme.colorScheme.primary
+                Box(Modifier.width(220.dp)) { ToolDetailContent(native) { _, _ -> } }
+            }
+        }
+        for (text in listOf("a.kt", "/repo/src", "b.kt", "/repo/new", "Update", "Add", "#1", "#2")) {
+            compose.onNodeWithText(text).assertExists()
+        }
+        for (text in listOf("*** Begin Patch", "*** Update File:", "*** Add File:", "*** End Patch", "@@")) {
+            compose.onAllNodesWithText(text, substring = true).assertCountEquals(0)
+        }
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithText("a.kt").performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        assertEquals(primary, layouts.single().layoutInput.style.color)
+        assertEquals(com.newoether.agora.ui.theme.MonoFamily, layouts.single().layoutInput.style.fontFamily)
+        val web = resources.webToolDetail(native)
+        val body = web.body as WebToolBody.Edit
+        assertEquals(listOf("a.kt", "b.kt"), body.files.map { it.path.name })
+        assertEquals(listOf(1, 2), body.files.first().hunks.map { it.index })
+        val encoded = com.newoether.agora.webui.WebUiSync.json.encodeToString(WebToolBody.serializer(), body)
+        assertEquals(body, com.newoether.agora.webui.WebUiSync.json.decodeFromString(WebToolBody.serializer(), encoded))
+        assertEquals(original, native)
+    }
+
+    @Test fun malformedPatchKeepsWholeOriginalArgumentsResultAndNativeState() {
+        val patch = "*** Begin Patch\n*** Add File: good.kt\n+kept\n*** Unknown File: bad.kt\n+x\n*** End Patch"
+        val native = segment("apply_patch", patch, "original receipt")
+        val detail = resources.toolDetailPresentation(native)
+        assertEquals(patch, detail.arguments)
+        assertEquals(listOf("original receipt"), (detail.body as ToolDetailBody.JsonContent).values)
+        assertEquals("succeeded", native.toolState)
+        assertEquals(patch, native.toolArgs)
     }
 
     @Test fun runningReadCanBecomeCodeAndMalformedResultKeepsOriginalJson() {

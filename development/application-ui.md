@@ -882,9 +882,10 @@ The input's scrollbar track starts level with the expand icon's top (`COMPOSER_C
 below the composer top), so the thumb is never cut by the rounded corner.
 A display formula that fits the message width does not claim horizontal drags, so a swipe over it
 still opens the drawer; only an overflowing formula scrolls. The Remote model menu re-reads the
-device's model catalog each time it opens. Remote always retains the bottom-bar details button and
-both Thinking and Service Tier rows; unsupported, loading or unavailable settings disable their
-individual rows and open-sheet controls without removing the button or menu entries.
+device's model catalog each time it opens. Remote always retains the bottom-bar details button
+and Thinking row; unsupported, loading or unavailable Thinking settings disable the row and its
+open-sheet controls. Service Tier visibility and availability follow the selected source and
+session capabilities in remote-sessions.md; a source without Service Tier omits that menu row.
 ## 35. Automatic message source
 A user bubble the app sent on the user's behalf (a Task run prompt, a Loop cycle prompt, or the
 answers to non-blocking `ask_user` questions) shows a label above the bubble, end-aligned: a `14 dp`

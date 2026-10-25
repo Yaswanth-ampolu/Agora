@@ -246,4 +246,8 @@
         <item quantity="many">تم عرض %1$d من خوادم MCP</item>
         <item quantity="other">تم عرض %1$d من خوادم MCP</item>
     </plurals>
+    <string name="tool_edit_operation_update">تحديث</string>
+    <string name="tool_edit_operation_add">إضافة</string>
+    <string name="tool_edit_operation_delete">حذف</string>
+    <string name="tool_edit_operation_move">نقل</string>
 </resources>

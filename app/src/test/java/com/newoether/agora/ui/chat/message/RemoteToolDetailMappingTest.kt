@@ -62,8 +62,8 @@ class RemoteToolDetailMappingTest {
         val patch = "*** Begin Patch\n*** Update File: a.kt\n@@\n-old\n+new\n*** Add File: b.kt\n+hello\n*** Delete File: gone.kt\n*** End Patch"
         for (input in listOf(args("patch" to patch), patch)) {
             val body = map("apply_patch", input, "Success")!!.body as ToolDetailBody.Edit
-            assertEquals(3, body.hunks.size)
-            assertTrue(body.hunks.first().lines.any { it.kind == ToolDetailDiffKind.REMOVED && it.text == "old" })
+            assertEquals(3, body.files.size)
+            assertTrue(body.files.first().hunks.single().lines.any { it.kind == ToolDetailDiffKind.REMOVED && it.text == "old" })
         }
         val changes = """{"changes":[{"path":"a.kt","kind":{"type":"update"},"diff":"@@ -1 +1 @@\n-old\n+new"}]}"""
         assertTrue(map("file_edit", changes, changes)!!.body is ToolDetailBody.Edit)
@@ -99,7 +99,8 @@ class RemoteToolDetailMappingTest {
         assertNull(map("Glob", args("pattern" to "*"), "{bad"))
         val patch = "*** Begin Patch\n*** Update File: a.kt\n*** Move to: b.kt\n@@\n-old\n+new\n*** End Patch"
         val moved = map("apply_patch", args("patch" to patch), "done")!!.body as ToolDetailBody.Edit
-        assertTrue(moved.hunks.single().lines.any { it.text == "*** Move to: b.kt" })
+        assertEquals(ToolDetailPath("b.kt", null), moved.files.single().moveTo)
+        assertTrue(moved.files.single().hunks.single().lines.none { it.text.startsWith("***") })
     }
 
     @Test fun remoteShellMappingPreservesRecordedLifecycleAndNativePayload() {

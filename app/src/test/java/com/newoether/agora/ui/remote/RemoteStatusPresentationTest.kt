@@ -94,14 +94,27 @@ class RemoteStatusPresentationTest {
     }
 
     @Test fun creatableDisconnectedSourceKeepsDraftWelcomeWithoutClaimingOnline() {
-        val cli = com.newoether.agora.remote.RemoteAdapter("codex-cli", "codex", "cli", "disconnected",
+        val desktop = com.newoether.agora.remote.RemoteAdapter("codex-desktop", "codex", "desktop", "disconnected",
             capabilities = com.newoether.agora.remote.RemoteCapabilities(create = true, history = true))
         val draft = state().copy(draftSessionId = session.id,
-            devices = listOf(state().devices.last().copy(multiAdapter = true, adapters = listOf(cli))))
+            devices = listOf(state().devices.last().copy(multiAdapter = true, adapters = listOf(desktop))))
         assertEquals(McpConnectionStatus.IDLE, draft.remoteConnectionStatus())
         assertEquals(R.string.remote_new_chat_hint, draft.remoteEmptyConversationHint())
         assertFalse(draft.canRetryEmptyConnection())
         assertEquals(R.string.remote_source_unavailable, draft.copy(draftSessionId = null).remoteEmptyConversationHint())
+    }
+
+    @Test fun disconnectedCliCannotAcquireDraftWelcomeFromAnOlderCreateAdvertisement() {
+        for ((id, family) in listOf("codex-cli" to "codex", "claude-code" to "claude")) {
+            val cli = com.newoether.agora.remote.RemoteAdapter(id, family, "cli", "disconnected",
+                capabilities = com.newoether.agora.remote.RemoteCapabilities(create = true, history = true))
+            val draft = state().copy(draftSessionId = session.id,
+                devices = listOf(state().devices.last().copy(multiAdapter = true, adapters = listOf(cli))))
+            assertFalse(draft.canCreate)
+            assertEquals(McpConnectionStatus.IDLE, draft.remoteConnectionStatus())
+            assertEquals(R.string.remote_source_unavailable, draft.remoteEmptyConversationHint())
+            assertTrue(draft.canRetryEmptyConnection())
+        }
     }
 
     @Test fun unavailableSourceRetainsHeadlineAndRetryAcrossGatewayCheck() {

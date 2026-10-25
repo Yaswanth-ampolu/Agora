@@ -318,6 +318,35 @@ class ToolResultContentSourceContractTest {
             "tool_found_matches_default",
         ).forEach { key -> assertTrue("Missing unknown-count fallback $key", source.contains(key)) }
     }
+    @Test
+    fun `Remote file operation labels exist once across each locale directory`() {
+        val root = locateResourceRoot()
+        val keys = listOf("tool_edit_operation_update", "tool_edit_operation_add",
+            "tool_edit_operation_delete", "tool_edit_operation_move")
+        val defaults = parseStrings(File(root, "values/tool_presentation_strings.xml"))
+        val directories = root.listFiles().orEmpty().filter { it.isDirectory &&
+            (it.name == "values" || it.name.matches(Regex("values-[a-z]{2}(-r[A-Z]{2})?"))) }
+        assertEquals(12, directories.size)
+        directories.forEach { directory ->
+            val entries = directory.listFiles().orEmpty().filter { it.extension == "xml" }
+                .flatMap { file ->
+                    val nodes = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
+                        .getElementsByTagName("string")
+                    (0 until nodes.length).map { index -> nodes.item(index).let { node ->
+                        node.attributes.getNamedItem("name").nodeValue to node.textContent
+                    } }
+                }.groupBy({ it.first }, { it.second })
+            assertTrue("${directory.name} aggregation was empty", entries.size > 1000)
+            keys.forEach { key ->
+                val values = entries[key].orEmpty()
+                assertEquals("${directory.name} $key missing or duplicated", 1, values.size)
+                assertTrue("${directory.name} $key empty", values.single().isNotBlank())
+                assertEquals(placeholders(defaults.getValue(key)), placeholders(values.single()))
+            }
+        }
+        assertEquals(listOf("Update", "Add", "Delete", "Move"), keys.map { defaults.getValue(it) })
+    }
+
     private fun parseStrings(file: File): Map<String, String> {
         val document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
         val nodes = document.getElementsByTagName("string")
